@@ -3015,7 +3015,7 @@ void dumpRpc(Stream &stream)
         d << spacer.innerSpaces() << "msgId: " << msgId << endl;
         TLVector<QByteArray> options;
         stream >> options;
-        d << spacer.innerSpaces() << "options: " << options.toHex() << endl;
+        d << spacer.innerSpaces() << "options: " << options << endl;
     }
         d << ")";
         break;

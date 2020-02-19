@@ -250,7 +250,8 @@ PendingOperation *MessagingApiPrivate::getDialogs()
 {
     PendingOperation *operation = new PendingOperation(this);
     operation->setOperationName("MessagingApi::getDialogs");
-    MessagesRpcLayer::PendingMessagesDialogs *rpcOperation = messagesLayer()->getDialogs(0, 0, 0, TLInputPeer(), c_dialogsFetchPortion);
+    quint32 hash = 0;
+    MessagesRpcLayer::PendingMessagesDialogs *rpcOperation = messagesLayer()->getDialogs(0, 0, 0, TLInputPeer(), c_dialogsFetchPortion, hash);
     dataInternalApi()->clearPinnedDialogs();
     rpcOperation->connectToFinished(this, &MessagingApiPrivate::onGetDialogsFinished, operation, rpcOperation);
     return operation;
@@ -543,7 +544,8 @@ void MessagingApiPrivate::onGetDialogsFinished(PendingOperation *operation, Mess
         }
 
         quint32 excludePinned = 1;
-        rpcOperation = messagesLayer()->getDialogs(excludePinned, date, lastTlDialog.topMessage, inputPeer, c_dialogsFetchPortion);
+        quint32 hash = 0;
+        rpcOperation = messagesLayer()->getDialogs(excludePinned, date, lastTlDialog.topMessage, inputPeer, c_dialogsFetchPortion, hash);
         rpcOperation->connectToFinished(this, &MessagingApiPrivate::onGetDialogsFinished, operation, rpcOperation);
         return;
     }

@@ -9809,6 +9809,7 @@ Stream &Stream::operator<<(const TLInputSingleMedia &inputSingleMediaValue)
 
     return *this;
 }
+
 // End of generated write operators implementation
 
 } // MTProto namespace

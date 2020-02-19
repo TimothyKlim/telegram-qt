@@ -6009,7 +6009,7 @@ QDebug operator<<(QDebug d, const TLSecureValueError &type)
     case TLValue::SecureValueErrorTranslationFiles:
         d << "\n";
         d << spacer.innerSpaces() << "type: " << type.type <<"\n";
-        d << spacer.innerSpaces() << "byteArrayFileHashVector: " << type.byteArrayFileHashVector.toHex() <<"\n";
+        d << spacer.innerSpaces() << "byteArrayFileHashVector: " << type.byteArrayFileHashVector <<"\n";
         d << spacer.innerSpaces() << "text: " << type.text <<"\n";
         break;
     case TLValue::SecureValueError:
