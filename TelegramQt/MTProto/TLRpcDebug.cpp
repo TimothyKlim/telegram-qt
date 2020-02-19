@@ -81,6 +81,33 @@ void dumpRpc(Stream &stream)
         break;
     }
     // Generated RPC debug cases
+    case TLValue::AccountAcceptAuthorization:
+        d << "AccountAcceptAuthorization(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 botId;
+        stream >> botId;
+        d << spacer.innerSpaces() << "botId: " << botId << endl;
+        QString scope;
+        stream >> scope;
+        d << spacer.innerSpaces() << "scope: " << scope << endl;
+        QString publicKey;
+        stream >> publicKey;
+        d << spacer.innerSpaces() << "publicKey: " << publicKey << endl;
+        TLVector<TLSecureValueHash> valueHashes;
+        stream >> valueHashes;
+        d << spacer.innerSpaces() << "valueHashes: " << valueHashes << endl;
+        TLSecureCredentialsEncrypted credentials;
+        stream >> credentials;
+        d << spacer.innerSpaces() << "credentials: " << credentials << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::AccountCancelPasswordEmail:
+        d << "AccountCancelPasswordEmail(";
+        d << ")";
+        break;
     case TLValue::AccountChangePhone:
         d << "AccountChangePhone(";
     {
@@ -109,6 +136,17 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::AccountConfirmPasswordEmail:
+        d << "AccountConfirmPasswordEmail(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString code;
+        stream >> code;
+        d << spacer.innerSpaces() << "code: " << code << endl;
+    }
+        d << ")";
+        break;
     case TLValue::AccountConfirmPhone:
         d << "AccountConfirmPhone(";
     {
@@ -134,12 +172,70 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::AccountDeleteSecureValue:
+        d << "AccountDeleteSecureValue(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLVector<TLSecureValueType> types;
+        stream >> types;
+        d << spacer.innerSpaces() << "types: " << types << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::AccountFinishTakeoutSession:
+        d << "AccountFinishTakeoutSession(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
+    }
+        d << ")";
+        break;
     case TLValue::AccountGetAccountTTL:
         d << "AccountGetAccountTTL(";
         d << ")";
         break;
+    case TLValue::AccountGetAllSecureValues:
+        d << "AccountGetAllSecureValues(";
+        d << ")";
+        break;
+    case TLValue::AccountGetAuthorizationForm:
+        d << "AccountGetAuthorizationForm(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 botId;
+        stream >> botId;
+        d << spacer.innerSpaces() << "botId: " << botId << endl;
+        QString scope;
+        stream >> scope;
+        d << spacer.innerSpaces() << "scope: " << scope << endl;
+        QString publicKey;
+        stream >> publicKey;
+        d << spacer.innerSpaces() << "publicKey: " << publicKey << endl;
+    }
+        d << ")";
+        break;
     case TLValue::AccountGetAuthorizations:
         d << "AccountGetAuthorizations(";
+        d << ")";
+        break;
+    case TLValue::AccountGetContactSignUpNotification:
+        d << "AccountGetContactSignUpNotification(";
+        d << ")";
+        break;
+    case TLValue::AccountGetNotifyExceptions:
+        d << "AccountGetNotifyExceptions(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
+    }
         d << ")";
         break;
     case TLValue::AccountGetNotifySettings:
@@ -162,9 +258,9 @@ void dumpRpc(Stream &stream)
     {
         d << endl;
         Spacer spacer;
-        QByteArray currentPasswordHash;
-        stream >> currentPasswordHash;
-        d << spacer.innerSpaces() << "currentPasswordHash: " << currentPasswordHash.toHex() << endl;
+        TLInputCheckPasswordSRP password;
+        stream >> password;
+        d << spacer.innerSpaces() << "password: " << password << endl;
     }
         d << ")";
         break;
@@ -179,14 +275,25 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::AccountGetSecureValue:
+        d << "AccountGetSecureValue(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLVector<TLSecureValueType> types;
+        stream >> types;
+        d << spacer.innerSpaces() << "types: " << types << endl;
+    }
+        d << ")";
+        break;
     case TLValue::AccountGetTmpPassword:
         d << "AccountGetTmpPassword(";
     {
         d << endl;
         Spacer spacer;
-        QByteArray passwordHash;
-        stream >> passwordHash;
-        d << spacer.innerSpaces() << "passwordHash: " << passwordHash.toHex() << endl;
+        TLInputCheckPasswordSRP password;
+        stream >> password;
+        d << spacer.innerSpaces() << "password: " << password << endl;
         quint32 period;
         stream >> period;
         d << spacer.innerSpaces() << "period: " << period << endl;
@@ -195,6 +302,21 @@ void dumpRpc(Stream &stream)
         break;
     case TLValue::AccountGetWallPapers:
         d << "AccountGetWallPapers(";
+        d << ")";
+        break;
+    case TLValue::AccountGetWebAuthorizations:
+        d << "AccountGetWebAuthorizations(";
+        d << ")";
+        break;
+    case TLValue::AccountInitTakeoutSession:
+        d << "AccountInitTakeoutSession(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
+    }
         d << ")";
         break;
     case TLValue::AccountRegisterDevice:
@@ -208,6 +330,15 @@ void dumpRpc(Stream &stream)
         QString token;
         stream >> token;
         d << spacer.innerSpaces() << "token: " << token << endl;
+        bool appSandbox;
+        stream >> appSandbox;
+        d << spacer.innerSpaces() << "appSandbox: " << appSandbox << endl;
+        QByteArray secret;
+        stream >> secret;
+        d << spacer.innerSpaces() << "secret: " << secret.toHex() << endl;
+        TLVector<quint32> otherUids;
+        stream >> otherUids;
+        d << spacer.innerSpaces() << "otherUids: " << otherUids << endl;
     }
         d << ")";
         break;
@@ -225,6 +356,10 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::AccountResendPasswordEmail:
+        d << "AccountResendPasswordEmail(";
+        d << ")";
+        break;
     case TLValue::AccountResetAuthorization:
         d << "AccountResetAuthorization(";
     {
@@ -238,6 +373,35 @@ void dumpRpc(Stream &stream)
         break;
     case TLValue::AccountResetNotifySettings:
         d << "AccountResetNotifySettings(";
+        d << ")";
+        break;
+    case TLValue::AccountResetWebAuthorization:
+        d << "AccountResetWebAuthorization(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint64 hash;
+        stream >> hash;
+        d << spacer.innerSpaces() << "hash: " << hash << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::AccountResetWebAuthorizations:
+        d << "AccountResetWebAuthorizations(";
+        d << ")";
+        break;
+    case TLValue::AccountSaveSecureValue:
+        d << "AccountSaveSecureValue(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputSecureValue value;
+        stream >> value;
+        d << spacer.innerSpaces() << "value: " << value << endl;
+        quint64 secureSecretId;
+        stream >> secureSecretId;
+        d << spacer.innerSpaces() << "secureSecretId: " << secureSecretId << endl;
+    }
         d << ")";
         break;
     case TLValue::AccountSendChangePhoneCode:
@@ -268,6 +432,31 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::AccountSendVerifyEmailCode:
+        d << "AccountSendVerifyEmailCode(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString email;
+        stream >> email;
+        d << spacer.innerSpaces() << "email: " << email << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::AccountSendVerifyPhoneCode:
+        d << "AccountSendVerifyPhoneCode(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
+        QString phoneNumber;
+        stream >> phoneNumber;
+        d << spacer.innerSpaces() << "phoneNumber: " << phoneNumber << endl;
+    }
+        d << ")";
+        break;
     case TLValue::AccountSetAccountTTL:
         d << "AccountSetAccountTTL(";
     {
@@ -276,6 +465,17 @@ void dumpRpc(Stream &stream)
         TLAccountDaysTTL ttl;
         stream >> ttl;
         d << spacer.innerSpaces() << "ttl: " << ttl << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::AccountSetContactSignUpNotification:
+        d << "AccountSetContactSignUpNotification(";
+    {
+        d << endl;
+        Spacer spacer;
+        bool silent;
+        stream >> silent;
+        d << spacer.innerSpaces() << "silent: " << silent << endl;
     }
         d << ")";
         break;
@@ -304,6 +504,9 @@ void dumpRpc(Stream &stream)
         QString token;
         stream >> token;
         d << spacer.innerSpaces() << "token: " << token << endl;
+        TLVector<quint32> otherUids;
+        stream >> otherUids;
+        d << spacer.innerSpaces() << "otherUids: " << otherUids << endl;
     }
         d << ")";
         break;
@@ -337,9 +540,9 @@ void dumpRpc(Stream &stream)
     {
         d << endl;
         Spacer spacer;
-        QByteArray currentPasswordHash;
-        stream >> currentPasswordHash;
-        d << spacer.innerSpaces() << "currentPasswordHash: " << currentPasswordHash.toHex() << endl;
+        TLInputCheckPasswordSRP password;
+        stream >> password;
+        d << spacer.innerSpaces() << "password: " << password << endl;
         TLAccountPasswordInputSettings newSettings;
         stream >> newSettings;
         d << spacer.innerSpaces() << "newSettings: " << newSettings << endl;
@@ -376,6 +579,37 @@ void dumpRpc(Stream &stream)
         QString username;
         stream >> username;
         d << spacer.innerSpaces() << "username: " << username << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::AccountVerifyEmail:
+        d << "AccountVerifyEmail(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString email;
+        stream >> email;
+        d << spacer.innerSpaces() << "email: " << email << endl;
+        QString code;
+        stream >> code;
+        d << spacer.innerSpaces() << "code: " << code << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::AccountVerifyPhone:
+        d << "AccountVerifyPhone(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString phoneNumber;
+        stream >> phoneNumber;
+        d << spacer.innerSpaces() << "phoneNumber: " << phoneNumber << endl;
+        QString phoneCodeHash;
+        stream >> phoneCodeHash;
+        d << spacer.innerSpaces() << "phoneCodeHash: " << phoneCodeHash << endl;
+        QString phoneCode;
+        stream >> phoneCode;
+        d << spacer.innerSpaces() << "phoneCode: " << phoneCode << endl;
     }
         d << ")";
         break;
@@ -418,20 +652,9 @@ void dumpRpc(Stream &stream)
     {
         d << endl;
         Spacer spacer;
-        QByteArray passwordHash;
-        stream >> passwordHash;
-        d << spacer.innerSpaces() << "passwordHash: " << passwordHash.toHex() << endl;
-    }
-        d << ")";
-        break;
-    case TLValue::AuthCheckPhone:
-        d << "AuthCheckPhone(";
-    {
-        d << endl;
-        Spacer spacer;
-        QString phoneNumber;
-        stream >> phoneNumber;
-        d << spacer.innerSpaces() << "phoneNumber: " << phoneNumber << endl;
+        TLInputCheckPasswordSRP password;
+        stream >> password;
+        d << spacer.innerSpaces() << "password: " << password << endl;
     }
         d << ")";
         break;
@@ -545,20 +768,6 @@ void dumpRpc(Stream &stream)
         QString apiHash;
         stream >> apiHash;
         d << spacer.innerSpaces() << "apiHash: " << apiHash << endl;
-    }
-        d << ")";
-        break;
-    case TLValue::AuthSendInvites:
-        d << "AuthSendInvites(";
-    {
-        d << endl;
-        Spacer spacer;
-        TLVector<QString> phoneNumbers;
-        stream >> phoneNumbers;
-        d << spacer.innerSpaces() << "phoneNumbers: " << phoneNumbers << endl;
-        QString message;
-        stream >> message;
-        d << spacer.innerSpaces() << "message: " << message << endl;
     }
         d << ")";
         break;
@@ -812,6 +1021,9 @@ void dumpRpc(Stream &stream)
         quint32 id;
         stream >> id;
         d << spacer.innerSpaces() << "id: " << id << endl;
+        bool grouped;
+        stream >> grouped;
+        d << spacer.innerSpaces() << "grouped: " << grouped << endl;
     }
         d << ")";
         break;
@@ -867,6 +1079,17 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::ChannelsGetLeftChannels:
+        d << "ChannelsGetLeftChannels(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 offset;
+        stream >> offset;
+        d << spacer.innerSpaces() << "offset: " << offset << endl;
+    }
+        d << ")";
+        break;
     case TLValue::ChannelsGetMessages:
         d << "ChannelsGetMessages(";
     {
@@ -875,7 +1098,7 @@ void dumpRpc(Stream &stream)
         TLInputChannel channel;
         stream >> channel;
         d << spacer.innerSpaces() << "channel: " << channel << endl;
-        TLVector<quint32> id;
+        TLVector<TLInputMessage> id;
         stream >> id;
         d << spacer.innerSpaces() << "id: " << id << endl;
     }
@@ -1055,23 +1278,6 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
-    case TLValue::ChannelsUpdatePinnedMessage:
-        d << "ChannelsUpdatePinnedMessage(";
-    {
-        d << endl;
-        Spacer spacer;
-        quint32 flags;
-        stream >> flags;
-        d << spacer.innerSpaces() << "flags: " << flags << endl;
-        TLInputChannel channel;
-        stream >> channel;
-        d << spacer.innerSpaces() << "channel: " << channel << endl;
-        quint32 id;
-        stream >> id;
-        d << spacer.innerSpaces() << "id: " << id << endl;
-    }
-        d << ")";
-        break;
     case TLValue::ChannelsUpdateUsername:
         d << "ChannelsUpdateUsername(";
     {
@@ -1097,6 +1303,17 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::ContactsDeleteByPhones:
+        d << "ContactsDeleteByPhones(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLVector<QString> phones;
+        stream >> phones;
+        d << spacer.innerSpaces() << "phones: " << phones << endl;
+    }
+        d << ")";
+        break;
     case TLValue::ContactsDeleteContact:
         d << "ContactsDeleteContact(";
     {
@@ -1119,10 +1336,6 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
-    case TLValue::ContactsExportCard:
-        d << "ContactsExportCard(";
-        d << ")";
-        break;
     case TLValue::ContactsGetBlocked:
         d << "ContactsGetBlocked(";
     {
@@ -1137,6 +1350,17 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::ContactsGetContactIDs:
+        d << "ContactsGetContactIDs(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 hash;
+        stream >> hash;
+        d << spacer.innerSpaces() << "hash: " << hash << endl;
+    }
+        d << ")";
+        break;
     case TLValue::ContactsGetContacts:
         d << "ContactsGetContacts(";
     {
@@ -1146,6 +1370,10 @@ void dumpRpc(Stream &stream)
         stream >> hash;
         d << spacer.innerSpaces() << "hash: " << hash << endl;
     }
+        d << ")";
+        break;
+    case TLValue::ContactsGetSaved:
+        d << "ContactsGetSaved(";
         d << ")";
         break;
     case TLValue::ContactsGetStatuses:
@@ -1169,17 +1397,6 @@ void dumpRpc(Stream &stream)
         quint32 hash;
         stream >> hash;
         d << spacer.innerSpaces() << "hash: " << hash << endl;
-    }
-        d << ")";
-        break;
-    case TLValue::ContactsImportCard:
-        d << "ContactsImportCard(";
-    {
-        d << endl;
-        Spacer spacer;
-        TLVector<quint32> exportCard;
-        stream >> exportCard;
-        d << spacer.innerSpaces() << "exportCard: " << exportCard << endl;
     }
         d << ")";
         break;
@@ -1237,6 +1454,17 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::ContactsToggleTopPeers:
+        d << "ContactsToggleTopPeers(";
+    {
+        d << endl;
+        Spacer spacer;
+        bool enabled;
+        stream >> enabled;
+        d << spacer.innerSpaces() << "enabled: " << enabled << endl;
+    }
+        d << ")";
+        break;
     case TLValue::ContactsUnblock:
         d << "ContactsUnblock(";
     {
@@ -1245,6 +1473,34 @@ void dumpRpc(Stream &stream)
         TLInputUser id;
         stream >> id;
         d << spacer.innerSpaces() << "id: " << id << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::HelpAcceptTermsOfService:
+        d << "HelpAcceptTermsOfService(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLDataJSON id;
+        stream >> id;
+        d << spacer.innerSpaces() << "id: " << id << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::HelpEditUserInfo:
+        d << "HelpEditUserInfo(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputUser userId;
+        stream >> userId;
+        d << spacer.innerSpaces() << "userId: " << userId << endl;
+        QString message;
+        stream >> message;
+        d << spacer.innerSpaces() << "message: " << message << endl;
+        TLVector<TLMessageEntity> entities;
+        stream >> entities;
+        d << spacer.innerSpaces() << "entities: " << entities << endl;
     }
         d << ")";
         break;
@@ -1259,8 +1515,19 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::HelpGetAppConfig:
+        d << "HelpGetAppConfig(";
+        d << ")";
+        break;
     case TLValue::HelpGetAppUpdate:
         d << "HelpGetAppUpdate(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString source;
+        stream >> source;
+        d << spacer.innerSpaces() << "source: " << source << endl;
+    }
         d << ")";
         break;
     case TLValue::HelpGetCdnConfig:
@@ -1271,12 +1538,38 @@ void dumpRpc(Stream &stream)
         d << "HelpGetConfig(";
         d << ")";
         break;
+    case TLValue::HelpGetDeepLinkInfo:
+        d << "HelpGetDeepLinkInfo(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString path;
+        stream >> path;
+        d << spacer.innerSpaces() << "path: " << path << endl;
+    }
+        d << ")";
+        break;
     case TLValue::HelpGetInviteText:
         d << "HelpGetInviteText(";
         d << ")";
         break;
     case TLValue::HelpGetNearestDc:
         d << "HelpGetNearestDc(";
+        d << ")";
+        break;
+    case TLValue::HelpGetPassportConfig:
+        d << "HelpGetPassportConfig(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 hash;
+        stream >> hash;
+        d << spacer.innerSpaces() << "hash: " << hash << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::HelpGetProxyData:
+        d << "HelpGetProxyData(";
         d << ")";
         break;
     case TLValue::HelpGetRecentMeUrls:
@@ -1294,8 +1587,23 @@ void dumpRpc(Stream &stream)
         d << "HelpGetSupport(";
         d << ")";
         break;
-    case TLValue::HelpGetTermsOfService:
-        d << "HelpGetTermsOfService(";
+    case TLValue::HelpGetSupportName:
+        d << "HelpGetSupportName(";
+        d << ")";
+        break;
+    case TLValue::HelpGetTermsOfServiceUpdate:
+        d << "HelpGetTermsOfServiceUpdate(";
+        d << ")";
+        break;
+    case TLValue::HelpGetUserInfo:
+        d << "HelpGetUserInfo(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputUser userId;
+        stream >> userId;
+        d << spacer.innerSpaces() << "userId: " << userId << endl;
+    }
         d << ")";
         break;
     case TLValue::HelpSaveAppLog:
@@ -1328,6 +1636,9 @@ void dumpRpc(Stream &stream)
     {
         d << endl;
         Spacer spacer;
+        QString langCode;
+        stream >> langCode;
+        d << spacer.innerSpaces() << "langCode: " << langCode << endl;
         quint32 fromVersion;
         stream >> fromVersion;
         d << spacer.innerSpaces() << "fromVersion: " << fromVersion << endl;
@@ -1339,6 +1650,23 @@ void dumpRpc(Stream &stream)
     {
         d << endl;
         Spacer spacer;
+        QString langPack;
+        stream >> langPack;
+        d << spacer.innerSpaces() << "langPack: " << langPack << endl;
+        QString langCode;
+        stream >> langCode;
+        d << spacer.innerSpaces() << "langCode: " << langCode << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::LangpackGetLanguage:
+        d << "LangpackGetLanguage(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString langPack;
+        stream >> langPack;
+        d << spacer.innerSpaces() << "langPack: " << langPack << endl;
         QString langCode;
         stream >> langCode;
         d << spacer.innerSpaces() << "langCode: " << langCode << endl;
@@ -1347,6 +1675,13 @@ void dumpRpc(Stream &stream)
         break;
     case TLValue::LangpackGetLanguages:
         d << "LangpackGetLanguages(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString langPack;
+        stream >> langPack;
+        d << spacer.innerSpaces() << "langPack: " << langPack << endl;
+    }
         d << ")";
         break;
     case TLValue::LangpackGetStrings:
@@ -1354,6 +1689,9 @@ void dumpRpc(Stream &stream)
     {
         d << endl;
         Spacer spacer;
+        QString langPack;
+        stream >> langPack;
+        d << spacer.innerSpaces() << "langPack: " << langPack << endl;
         QString langCode;
         stream >> langCode;
         d << spacer.innerSpaces() << "langCode: " << langCode << endl;
@@ -1406,6 +1744,10 @@ void dumpRpc(Stream &stream)
         stream >> hash;
         d << spacer.innerSpaces() << "hash: " << hash << endl;
     }
+        d << ")";
+        break;
+    case TLValue::MessagesClearAllDrafts:
+        d << "MessagesClearAllDrafts(";
         d << ")";
         break;
     case TLValue::MessagesClearRecentStickers:
@@ -1590,23 +1932,6 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
-    case TLValue::MessagesForwardMessage:
-        d << "MessagesForwardMessage(";
-    {
-        d << endl;
-        Spacer spacer;
-        TLInputPeer peer;
-        stream >> peer;
-        d << spacer.innerSpaces() << "peer: " << peer << endl;
-        quint32 id;
-        stream >> id;
-        d << spacer.innerSpaces() << "id: " << id << endl;
-        quint64 randomId;
-        stream >> randomId;
-        d << spacer.innerSpaces() << "randomId: " << randomId << endl;
-    }
-        d << ")";
-        break;
     case TLValue::MessagesForwardMessages:
         d << "MessagesForwardMessages(";
     {
@@ -1743,6 +2068,10 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::MessagesGetDialogUnreadMarks:
+        d << "MessagesGetDialogUnreadMarks(";
+        d << ")";
+        break;
     case TLValue::MessagesGetDialogs:
         d << "MessagesGetDialogs(";
     {
@@ -1763,6 +2092,9 @@ void dumpRpc(Stream &stream)
         quint32 limit;
         stream >> limit;
         d << spacer.innerSpaces() << "limit: " << limit << endl;
+        quint32 hash;
+        stream >> hash;
+        d << spacer.innerSpaces() << "hash: " << hash << endl;
     }
         d << ")";
         break;
@@ -1932,7 +2264,7 @@ void dumpRpc(Stream &stream)
     {
         d << endl;
         Spacer spacer;
-        TLVector<quint32> id;
+        TLVector<TLInputMessage> id;
         stream >> id;
         d << spacer.innerSpaces() << "id: " << id << endl;
     }
@@ -1955,12 +2287,23 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::MessagesGetOnlines:
+        d << "MessagesGetOnlines(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputPeer peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
+    }
+        d << ")";
+        break;
     case TLValue::MessagesGetPeerDialogs:
         d << "MessagesGetPeerDialogs(";
     {
         d << endl;
         Spacer spacer;
-        TLVector<TLInputPeer> peers;
+        TLVector<TLInputDialogPeer> peers;
         stream >> peers;
         d << spacer.innerSpaces() << "peers: " << peers << endl;
     }
@@ -1981,6 +2324,20 @@ void dumpRpc(Stream &stream)
         d << "MessagesGetPinnedDialogs(";
         d << ")";
         break;
+    case TLValue::MessagesGetPollResults:
+        d << "MessagesGetPollResults(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputPeer peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
+        quint32 msgId;
+        stream >> msgId;
+        d << spacer.innerSpaces() << "msgId: " << msgId << endl;
+    }
+        d << ")";
+        break;
     case TLValue::MessagesGetRecentLocations:
         d << "MessagesGetRecentLocations(";
     {
@@ -1992,6 +2349,9 @@ void dumpRpc(Stream &stream)
         quint32 limit;
         stream >> limit;
         d << spacer.innerSpaces() << "limit: " << limit << endl;
+        quint32 hash;
+        stream >> hash;
+        d << spacer.innerSpaces() << "hash: " << hash << endl;
     }
         d << ")";
         break;
@@ -2020,6 +2380,21 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::MessagesGetSplitRanges:
+        d << "MessagesGetSplitRanges(";
+        d << ")";
+        break;
+    case TLValue::MessagesGetStatsURL:
+        d << "MessagesGetStatsURL(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputPeer peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
+    }
+        d << ")";
+        break;
     case TLValue::MessagesGetStickerSet:
         d << "MessagesGetStickerSet(";
     {
@@ -2028,6 +2403,20 @@ void dumpRpc(Stream &stream)
         TLInputStickerSet stickerset;
         stream >> stickerset;
         d << spacer.innerSpaces() << "stickerset: " << stickerset << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::MessagesGetStickers:
+        d << "MessagesGetStickers(";
+    {
+        d << endl;
+        Spacer spacer;
+        QString emoticon;
+        stream >> emoticon;
+        d << spacer.innerSpaces() << "emoticon: " << emoticon << endl;
+        quint32 hash;
+        stream >> hash;
+        d << spacer.innerSpaces() << "hash: " << hash << endl;
     }
         d << ")";
         break;
@@ -2076,6 +2465,9 @@ void dumpRpc(Stream &stream)
     {
         d << endl;
         Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
         QString message;
         stream >> message;
         d << spacer.innerSpaces() << "message: " << message << endl;
@@ -2115,6 +2507,20 @@ void dumpRpc(Stream &stream)
         bool archived;
         stream >> archived;
         d << spacer.innerSpaces() << "archived: " << archived << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::MessagesMarkDialogUnread:
+        d << "MessagesMarkDialogUnread(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
+        TLInputDialogPeer peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
     }
         d << ")";
         break;
@@ -2220,7 +2626,7 @@ void dumpRpc(Stream &stream)
         quint32 flags;
         stream >> flags;
         d << spacer.innerSpaces() << "flags: " << flags << endl;
-        TLVector<TLInputPeer> order;
+        TLVector<TLInputDialogPeer> order;
         stream >> order;
         d << spacer.innerSpaces() << "order: " << order << endl;
     }
@@ -2237,6 +2643,23 @@ void dumpRpc(Stream &stream)
         TLVector<quint64> order;
         stream >> order;
         d << spacer.innerSpaces() << "order: " << order << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::MessagesReport:
+        d << "MessagesReport(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputPeer peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
+        TLVector<quint32> id;
+        stream >> id;
+        d << spacer.innerSpaces() << "id: " << id << endl;
+        TLReportReason reason;
+        stream >> reason;
+        d << spacer.innerSpaces() << "reason: " << reason << endl;
     }
         d << ")";
         break;
@@ -2365,6 +2788,9 @@ void dumpRpc(Stream &stream)
         quint32 minId;
         stream >> minId;
         d << spacer.innerSpaces() << "minId: " << minId << endl;
+        quint32 hash;
+        stream >> hash;
+        d << spacer.innerSpaces() << "hash: " << hash << endl;
     }
         d << ")";
         break;
@@ -2402,6 +2828,23 @@ void dumpRpc(Stream &stream)
         quint32 limit;
         stream >> limit;
         d << spacer.innerSpaces() << "limit: " << limit << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::MessagesSearchStickerSets:
+        d << "MessagesSearchStickerSets(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
+        QString q;
+        stream >> q;
+        d << spacer.innerSpaces() << "q: " << q << endl;
+        quint32 hash;
+        stream >> hash;
+        d << spacer.innerSpaces() << "hash: " << hash << endl;
     }
         d << ")";
         break;
@@ -2496,6 +2939,9 @@ void dumpRpc(Stream &stream)
         TLInputMedia media;
         stream >> media;
         d << spacer.innerSpaces() << "media: " << media << endl;
+        QString message;
+        stream >> message;
+        d << spacer.innerSpaces() << "message: " << message << endl;
         quint64 randomId;
         stream >> randomId;
         d << spacer.innerSpaces() << "randomId: " << randomId << endl;
@@ -2522,6 +2968,23 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::MessagesSendMultiMedia:
+        d << "MessagesSendMultiMedia(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
+        TLInputPeer peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
+        TLVector<TLInputSingleMedia> multiMedia;
+        stream >> multiMedia;
+        d << spacer.innerSpaces() << "multiMedia: " << multiMedia << endl;
+    }
+        d << ")";
+        break;
     case TLValue::MessagesSendScreenshotNotification:
         d << "MessagesSendScreenshotNotification(";
     {
@@ -2536,6 +2999,23 @@ void dumpRpc(Stream &stream)
         quint64 randomId;
         stream >> randomId;
         d << spacer.innerSpaces() << "randomId: " << randomId << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::MessagesSendVote:
+        d << "MessagesSendVote(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputPeer peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
+        quint32 msgId;
+        stream >> msgId;
+        d << spacer.innerSpaces() << "msgId: " << msgId << endl;
+        TLVector<QByteArray> options;
+        stream >> options;
+        d << spacer.innerSpaces() << "options: " << options.toHex() << endl;
     }
         d << ")";
         break;
@@ -2717,7 +3197,7 @@ void dumpRpc(Stream &stream)
         quint32 flags;
         stream >> flags;
         d << spacer.innerSpaces() << "flags: " << flags << endl;
-        TLInputPeer peer;
+        TLInputDialogPeer peer;
         stream >> peer;
         d << spacer.innerSpaces() << "peer: " << peer << endl;
     }
@@ -2731,6 +3211,37 @@ void dumpRpc(Stream &stream)
         TLInputStickerSet stickerset;
         stream >> stickerset;
         d << spacer.innerSpaces() << "stickerset: " << stickerset << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::MessagesUpdatePinnedMessage:
+        d << "MessagesUpdatePinnedMessage(";
+    {
+        d << endl;
+        Spacer spacer;
+        quint32 flags;
+        stream >> flags;
+        d << spacer.innerSpaces() << "flags: " << flags << endl;
+        TLInputPeer peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
+        quint32 id;
+        stream >> id;
+        d << spacer.innerSpaces() << "id: " << id << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::MessagesUploadEncryptedFile:
+        d << "MessagesUploadEncryptedFile(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputEncryptedChat peer;
+        stream >> peer;
+        d << spacer.innerSpaces() << "peer: " << peer << endl;
+        TLInputEncryptedFile file;
+        stream >> file;
+        d << spacer.innerSpaces() << "file: " << file << endl;
     }
         d << ")";
         break;
@@ -3152,6 +3663,20 @@ void dumpRpc(Stream &stream)
     }
         d << ")";
         break;
+    case TLValue::UploadGetFileHashes:
+        d << "UploadGetFileHashes(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputFileLocation location;
+        stream >> location;
+        d << spacer.innerSpaces() << "location: " << location << endl;
+        quint32 offset;
+        stream >> offset;
+        d << spacer.innerSpaces() << "offset: " << offset << endl;
+    }
+        d << ")";
+        break;
     case TLValue::UploadGetWebFile:
         d << "UploadGetWebFile(";
     {
@@ -3239,6 +3764,20 @@ void dumpRpc(Stream &stream)
         TLVector<TLInputUser> id;
         stream >> id;
         d << spacer.innerSpaces() << "id: " << id << endl;
+    }
+        d << ")";
+        break;
+    case TLValue::UsersSetSecureValueErrors:
+        d << "UsersSetSecureValueErrors(";
+    {
+        d << endl;
+        Spacer spacer;
+        TLInputUser id;
+        stream >> id;
+        d << spacer.innerSpaces() << "id: " << id << endl;
+        TLVector<TLSecureValueError> errors;
+        stream >> errors;
+        d << spacer.innerSpaces() << "errors: " << errors << endl;
     }
         d << ")";
         break;
