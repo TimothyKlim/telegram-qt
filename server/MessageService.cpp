@@ -78,6 +78,14 @@ bool MessageService::addMessageReference(quint64 globalId, const Peer &peer, qui
     return true;
 }
 
+MessageData *MessageService::getMutableMessage(quint64 globalId)
+{
+    if (!m_messages.contains(globalId)) {
+        return nullptr;
+    }
+    return &m_messages[globalId];
+}
+
 } // Server namespace
 
 } // Telegram namespace

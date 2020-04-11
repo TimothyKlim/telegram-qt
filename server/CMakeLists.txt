@@ -7,6 +7,8 @@ set(server_lib_SOURCES
     CServerTcpTransport.hpp
     DefaultAuthorizationProvider.cpp
     DefaultAuthorizationProvider.hpp
+    FederalizationApi.cpp
+    FederalizationApi.hpp
     FunctionStreamOperators.cpp
     FunctionStreamOperators.hpp
     GroupChat.cpp
