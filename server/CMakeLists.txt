@@ -5,6 +5,8 @@ set(server_lib_SOURCES
     AuthorizationProvider.hpp
     DefaultAuthorizationProvider.cpp
     DefaultAuthorizationProvider.hpp
+    FederalizationApi.cpp
+    FederalizationApi.hpp
     FunctionStreamOperators.cpp
     FunctionStreamOperators.hpp
     GroupChat.cpp

@@ -76,6 +76,9 @@ if(TELEGRAMQT_BUILD_QML_IMPORT)
     list(APPEND QT_COMPONENTS Qml)
 endif()
 
+# For XMPP server
+list(APPEND QT_COMPONENTS Xml)
+
 if(TELEGRAMQT_BUILD_SERVER)
     if(NOT TELEGRAMQT_EXPORT_INTERNAL_API)
         message(SEND_ERROR "Unable to build the server because the internal API export disabled")

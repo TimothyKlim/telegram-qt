@@ -38,6 +38,7 @@ public:
     MessageData *addServiceMessage(quint32 fromId, Peer toPeer, const ServiceMessageAction &action);
     MessageData *replaceMessageContent(quint64 globalId, const MessageContent &content);
     const MessageData *getMessage(quint64 globalId);
+    MessageData *getMutableMessage(quint64 globalId);
 
     bool addMessageReference(quint64 globalId, const Peer &peer, quint32 messageId);
 

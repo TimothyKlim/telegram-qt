@@ -1309,6 +1309,9 @@ GroupChat *Server::getGroupChat(quint32 chatId) const
 
 bool Server::isLocalBox(const PostBox *box) const
 {
+    if (!box) {
+        return false;
+    }
     const Peer peer = box->peer();
     if (peer.type() == Peer::Type::User) {
         return getUser(peer.id());
@@ -1387,7 +1390,6 @@ AbstractUser *Server::getRemoteUser(const QString &identifier) const
     }
     return nullptr;
 }
-
 
 QVector<PostBox *> Server::getPostBoxes(const Peer &targetPeer, AbstractUser *applicant) const
 {
