@@ -43,6 +43,10 @@
 #include <QStandardPaths>
 #include <QTimer>
 
+#ifdef ENABLE_XMPP
+#include "xmpp/XmppFederation.hpp"
+#endif
+
 using namespace Telegram::Server;
 
 class ConstantAuthCodeProvider : public Authorization::DefaultProvider
@@ -191,6 +195,8 @@ ExitCode internalMain(int argc, char *argv[])
     Telegram::DcConfiguration dcConfig = Config().serverConfiguration();
     dcConfig.dcOptions.clear();
 
+    QString address = parser.value(configAddressOption);
+
     for (quint32 i = 0; i < 3; ++i) {
         Telegram::DcOption dcOption;
         dcOption.id = i + 1;
@@ -222,6 +228,14 @@ ExitCode internalMain(int argc, char *argv[])
     } else {
         qWarning() << "Unable to save the RSA key in a persistent location.";
     }
+
+#ifdef ENABLE_XMPP
+    XmppFederalizationApi *xmppFed = new XmppFederalizationApi();
+    xmppFed->setDomain(address);
+    xmppFed->setListenAddress(QHostAddress(address));
+
+    cluster.addFederalization(xmppFed);
+#endif
 
     if (!cluster.start()) {
         return ExitCode::UnableToStartServer;
