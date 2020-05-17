@@ -126,3 +126,8 @@ install(
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT Runtime
 )
+
+add_subdirectory(xmpp)
+target_link_libraries(TelegramServer PRIVATE
+    Internal::XmppPlugin
+)
