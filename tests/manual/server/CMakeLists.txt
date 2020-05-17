@@ -37,6 +37,15 @@ target_link_libraries(TelegramTestServer
     test_keys_data
 )
 
+if(TARGET Internal::XmppPlugin)
+    target_link_libraries(TelegramTestServer
+        Internal::XmppPlugin
+    )
+    target_compile_definitions(TelegramTestServer PRIVATE
+        ENABLE_XMPP
+    )
+endif()
+
 if(TELEGRAMQT_DEVELOPER_BUILD)
     target_compile_definitions(TelegramTestServer PRIVATE
         DEVELOPER_BUILD
