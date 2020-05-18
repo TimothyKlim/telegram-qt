@@ -10,13 +10,17 @@ namespace Telegram {
 
 namespace Server {
 
-class FederalizationApi : public AbstractServerApi
+class FederalizationApi : public QObject, public AbstractServerApi
 {
+    Q_OBJECT
 public:
-    FederalizationApi() = default;
+    explicit FederalizationApi(QObject *parent = nullptr);
     ~FederalizationApi() = default;
 
     virtual bool start() = 0;
+
+    virtual QStringList supportedSchemes() const = 0;
+    virtual PendingVariant *searchContacts(const QString &query, quint32 limit) = 0;
 
     quint32 dcId() const final { return m_dcId; }
     void setDcId(quint32 id) { m_dcId = id; }
@@ -49,6 +53,7 @@ class FederalizationGateway : public AbstractServerConnection
 public:
     explicit FederalizationGateway(QObject *parent = nullptr);
 
+    QStringList supportedSchemes() const override;
     quint32 dcId() const override;
 
     void setApi(FederalizationApi *remoteServer);
@@ -58,6 +63,7 @@ public:
     AbstractServerApi *api();
 
     QByteArray getForeingUserAuthorization(quint32 userId);
+    PendingVariant *searchContacts(const QString &query, quint32 limit) override;
 
 protected:
     FederalizationApi *m_server = nullptr;

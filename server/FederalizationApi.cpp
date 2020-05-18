@@ -10,6 +10,11 @@ FederalizationGateway::FederalizationGateway(QObject *parent)
 {
 }
 
+QStringList FederalizationGateway::supportedSchemes() const
+{
+    return m_server->supportedSchemes();
+}
+
 quint32 FederalizationGateway::dcId() const
 {
     return m_server->dcId();
@@ -38,6 +43,16 @@ AbstractServerApi *FederalizationGateway::api()
 QByteArray FederalizationGateway::getForeingUserAuthorization(quint32 userId)
 {
     return QByteArray();
+}
+
+PendingVariant *FederalizationGateway::searchContacts(const QString &query, quint32 limit)
+{
+    return m_server->searchContacts(query, limit);
+}
+
+FederalizationApi::FederalizationApi(QObject *parent)
+    : QObject(parent)
+{
 }
 
 void FederalizationApi::addServerConnection(AbstractServerConnection *remoteServer)

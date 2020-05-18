@@ -5,6 +5,7 @@
 #include "Debug_p.hpp"
 #include "MediaService.hpp"
 #include "MessageService.hpp"
+#include "PendingVariant.hpp"
 #include "RandomGenerator.hpp"
 #include "RemoteClientConnection.hpp"
 #include "RemoteServerConnection.hpp"
@@ -618,6 +619,31 @@ PendingOperation *Server::searchContacts(const QString &query, quint32 limit, QV
     PendingOperation *operation = new PendingOperation(this);
     operation->setObjectName(QStringLiteral("searchContacts(query: %1, limit: %2)")
                              .arg(query).arg(limit));
+
+    const QString scheme = query.section(QLatin1Char(':'), 0, 0);
+
+    for (AbstractServerConnection *server : m_remoteServers) {
+        if (server->supportedSchemes().contains(scheme)) {
+            PendingVariant *foreingRequest = server->searchContacts(query, limit);
+            connect(foreingRequest, &PendingVariant::finished, this, [operation, foreingRequest, output]() {
+                if (!foreingRequest->isSucceeded()) {
+                    qWarning() << "Search op failed" << foreingRequest->errorDetails();
+
+                    operation->finishLater();
+                    return;
+                }
+
+                const QVariant result = foreingRequest->result();
+                if (!result.isNull()) {
+                    PeerList peers = result.value<PeerList>();
+                    output->append(peers);
+                }
+                operation->finishLater();
+            });
+
+            return operation;
+        }
+    }
 
     const Peer peer = getPeerByUserName(query);
     if (peer.isValid()) {
