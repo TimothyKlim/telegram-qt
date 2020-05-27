@@ -8,6 +8,7 @@
 #include <QXmppIq.h>
 #include <QXmppMessage.h>
 #include <QXmppPingIq.h>
+#include <QXmppPresence.h>
 #include <QXmppServer.h>
 #include <QXmppVCardIq.h>
 
@@ -121,9 +122,11 @@ bool TelegramExtension::handleStanza(const QDomElement &element)
         if (QXmppDiscoveryIq::isDiscoveryIq(element)) {
             QXmppDiscoveryIq receivedIq;
             receivedIq.parse(element);
+            if (receivedIq.type() == QXmppIq::Get) {
+                return handleDiscoveryGet(receivedIq);
+            }
             if (receivedIq.type() == QXmppIq::Result) {
-                handleDiscoveryResult(receivedIq);
-                return true;
+                return handleDiscoveryResult(receivedIq);
             }
         } else if (QXmppPingIq::isPingIq(element)) {
             QXmppPingIq receivedIq;
@@ -132,6 +135,13 @@ bool TelegramExtension::handleStanza(const QDomElement &element)
                 handlePingResult(receivedIq);
                 return true;
             }
+        }
+    } else if (element.tagName() == "presence") {
+        QXmppPresence presenceStanza;
+        presenceStanza.parse(element);
+        if (presenceStanza.isMucSupported()) {
+            // XEP-0045 / Enter a room
+            return handleXmppUserJoinMuc(presenceStanza);
         }
     }
 
@@ -191,6 +201,57 @@ bool TelegramExtension::handleRequestVCard(const QDomElement &element)
     return true;
 }
 
+bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
+{
+    QString fromJid = stanza.from();
+    XmppUser *fromUser = xmpp()->ensureUser(stanza.from());
+
+    // Get the room name from 'to'
+    // Check if the room does not exist
+    // Broadcast the presence
+    GroupChat *muc = nullptr;
+
+    // TODO: status code, https://xmpp.org/extensions/xep-0045.html#enter-nonanon
+    // Code 100 for "any occupant is allowed to see the user's full JID"
+    // Code 170 for "room logging is enabled"
+    // Maybe code 172 for "the room is non-anonymous"
+
+    QString mucJid;
+    for (const ChatMember &member : muc->members()) {
+        // Maybe it's OK to send presence to the joined user to inform about the role?
+        if (member.userId == fromUser->userId()) {
+            continue;
+        }
+
+        QXmppPresence memberPresence;
+        memberPresence.setFrom(mucJid + "/member1");
+        memberPresence.setTo(fromJid);
+        QXmppMucItem mucItem;
+        mucItem.setJid(xmpp()->getUserBareJid(member.userId));
+        switch (member.role) {
+        case ChatMember::Role::Admin:
+            mucItem.setAffiliation(QXmppMucItem::AdminAffiliation);
+            mucItem.setRole(QXmppMucItem::ModeratorRole);
+            break;
+        case ChatMember::Role::Creator:
+            mucItem.setAffiliation(QXmppMucItem::OwnerAffiliation);
+            mucItem.setRole(QXmppMucItem::ModeratorRole);
+            break;
+        case ChatMember::Role::User:
+            mucItem.setAffiliation(QXmppMucItem::MemberAffiliation);
+            mucItem.setRole(QXmppMucItem::ParticipantRole);
+            break;
+        case ChatMember::Role::Invalid:
+            continue; // Omit the invalid member
+            break;
+        }
+        memberPresence.setMucItem(mucItem);
+        server()->sendPacket(memberPresence);
+    }
+
+    return false;
+}
+
 bool TelegramExtension::handleMessage(const QXmppMessage &stanza)
 {
     //  <message xmlns="jabber:server" to="telegram@127.0.0.2" id="aabfa" from="qxmpp.test1@127.0.0.3/localhost">
@@ -200,15 +261,26 @@ bool TelegramExtension::handleMessage(const QXmppMessage &stanza)
     // </message>
 
     XmppUser *fromUser = xmpp()->ensureUser(stanza.from());
-    AbstractUser *recipient = xmpp()->getTelegramUser(stanza.to());
-    if (!recipient) {
-        qWarning() << "Unable to delivery message: recipient" << stanza.to() << "not found";
+    const Peer targetPeer = xmpp()->getPeerFromJid(stanza.to());
+    if (!targetPeer.isValid()) {
+        qWarning() << "Unable to delivery message: peer" << stanza.to() << "not found";
         return false;
     }
 
-    xmpp()->sendMessageFromXmpp(fromUser, recipient, stanza.body());
+    xmpp()->sendMessageFromXmpp(fromUser, targetPeer, stanza.body());
 
     return true;
+}
+
+bool TelegramExtension::handleDiscoveryGet(const QXmppDiscoveryIq &stanza)
+{
+    if (stanza.queryType() == QXmppDiscoveryIq::InfoQuery) {
+        if (stanza.queryNode() == QLatin1String("x-roomuser-item")) {
+
+        }
+    }
+
+    return false;
 }
 
 bool TelegramExtension::handleDiscoveryResult(const QXmppDiscoveryIq &stanza)

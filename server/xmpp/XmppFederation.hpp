@@ -31,29 +31,34 @@ public:
     void setDomain(const QString &domain);
     void setListenAddress(const QHostAddress &address);
 
+    AbstractUser *getUser(const QString &jid) const;
+
     XmppUser *ensureUser(const QString &jid);
 
-    XmppUser *getUser(const QString &jid) const;
-    XmppUser *getUser(quint32 userId) const;
+    XmppUser *getXmppUser(const QString &jid) const;
+    XmppUser *getXmppUser(quint32 userId) const;
 
-    AbstractUser *getTelegramUser(const QString &jid);
-    AbstractUser *getTelegramUser(quint32 userId);
-    QString getBareJid(quint32 userId);
+    AbstractUser *getTelegramUser(const QString &jid) const;
+    AbstractUser *getTelegramUser(quint32 userId) const;
+    QString getUserBareJid(quint32 userId) const;
+    QString getBareJid(const Peer &peer) const;
+    Peer getPeerFromJid(const QString &jid) const;
 
     QXmppServer *xmppServer() const { return m_xmppServer; }
-    void sendMessageFromTelegram(const QString &from, const QString &toJid, const QString &message);
-    void sendMessageFromXmpp(XmppUser *fromUser, MessageRecipient *recipient, const QString &message);
+    void sendMessageFromTelegram(const QString &from, const Peer &targetPeer, const QString &routeToJid, const MessageData *messageData);
+    void sendMessageFromXmpp(XmppUser *fromUser, const Peer &targetPeer, const QString &message);
+
+    void inviteToMuc(const Peer &mucPeer, const QString &fromJid, const QString &toJid);
 
     AbstractUser *getAbstractUser(quint32 userId) const override;
     AbstractUser *getAbstractUser(const QString &identifier) const override;
 
     void insertUser(XmppUser *user);
+    QVector<PostBox *> getPostBoxes(const Peer &targetPeer, AbstractUser *applicant = nullptr) const;
 
     PhoneStatus getPhoneStatus(const QString &identifier) const override { return PhoneStatus(); }
     bool identifierIsValid(const QString &identifier) const override { return false; }
     QString normalizeIdentifier(const QString &identifier) const override { return QString(); }
-    IMediaService *mediaService() const override { return nullptr; }
-    MessageRecipient *getRecipient(const Peer &peer) const override { return nullptr; }
     void queueServerUpdates(const QVector<UpdateNotification> &notifications) override;
 
     void addNetworkRequest(const QString &stanzaId, PendingVariant *operation);
