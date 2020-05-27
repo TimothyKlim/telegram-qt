@@ -15,6 +15,7 @@
 
 #include "ApiUtils.hpp"
 
+#include "GroupChat.hpp"
 #include "MessageService.hpp"
 #include "PendingVariant.hpp"
 #include "ServerApi.hpp"
@@ -131,6 +132,16 @@ void XmppFederalizationApi::setListenAddress(const QHostAddress &address)
     m_listenAddress = address;
 }
 
+AbstractUser *XmppFederalizationApi::getUser(const QString &jid) const
+{
+    XmppUser *user = getXmppUser(jid);
+    if (user) {
+        return user;
+    }
+
+    return getTelegramUser(jid);
+}
+
 XmppUser *XmppFederalizationApi::ensureUser(const QString &jid)
 {
     const QString bareJid = QXmppUtils::jidToBareJid(jid);
@@ -147,19 +158,19 @@ XmppUser *XmppFederalizationApi::ensureUser(const QString &jid)
     return newUser;
 }
 
-XmppUser *XmppFederalizationApi::getUser(const QString &jid) const
+XmppUser *XmppFederalizationApi::getXmppUser(const QString &jid) const
 {
     const QString bareJid = QXmppUtils::jidToBareJid(jid);
     quint32 userId = m_jidToUserId.value(bareJid);
     return m_users.value(userId);
 }
 
-XmppUser *XmppFederalizationApi::getUser(quint32 userId) const
+XmppUser *XmppFederalizationApi::getXmppUser(quint32 userId) const
 {
     return m_users.value(userId);
 }
 
-AbstractUser *XmppFederalizationApi::getTelegramUser(const QString &jid)
+AbstractUser *XmppFederalizationApi::getTelegramUser(const QString &jid) const
 {
     const QString userName = QXmppUtils::jidToUser(jid);
     AbstractUser *user = getServerUser(userName);
@@ -169,14 +180,14 @@ AbstractUser *XmppFederalizationApi::getTelegramUser(const QString &jid)
     return user;
 }
 
-AbstractUser *XmppFederalizationApi::getTelegramUser(quint32 userId)
+AbstractUser *XmppFederalizationApi::getTelegramUser(quint32 userId) const
 {
     return getServerUser(userId);
 }
 
-QString XmppFederalizationApi::getBareJid(quint32 userId)
+QString XmppFederalizationApi::getUserBareJid(quint32 userId) const
 {
-    const XmppUser *localUser = getUser(userId);
+    const XmppUser *localUser = getXmppUser(userId);
     if (localUser) {
         return localUser->jid();
     }
@@ -191,25 +202,47 @@ QString XmppFederalizationApi::getBareJid(quint32 userId)
     return QString();
 }
 
-void XmppFederalizationApi::sendMessageFromTelegram(const QString &from, const QString &toJid, const QString &message)
+QString XmppFederalizationApi::getBareJid(const Peer &peer) const
+{
+    if (peer.type() == Peer::User) {
+        return getUserBareJid(peer.id());
+    }
+
+    return QString();
+}
+
+Peer XmppFederalizationApi::getPeerFromJid(const QString &jid) const
+{
+    AbstractUser *user = getUser(jid);
+    if (user) {
+        return user->toPeer();
+    }
+
+    return Peer();
+}
+
+void XmppFederalizationApi::sendMessageFromTelegram(const QString &from, const Peer &targetPeer, const QString &routeToJid, const MessageData *messageData)
 {
     if (from.isEmpty()) {
         return;
     }
-    if (toJid.isEmpty()) {
+
+    const QString toJid = getBareJid(targetPeer);
+    if (toJid != routeToJid) {
+        qCritical() << "Unable to delivery the message to" << toJid << "for jid" << routeToJid;
         return;
     }
 
-    xmppServer()->sendPacket(QXmppMessage(from, toJid, message));
+    xmppServer()->sendPacket(QXmppMessage(from, toJid, messageData->content().text()));
 }
 
-void XmppFederalizationApi::sendMessageFromXmpp(XmppUser *fromUser, MessageRecipient *recipient, const QString &message)
+void XmppFederalizationApi::sendMessageFromXmpp(XmppUser *fromUser, const Peer &targetPeer, const QString &message)
 {
     const MessageData *messageData = messageService()->addMessage(fromUser->id(),
-                                                                  recipient->toPeer(),
+                                                                  targetPeer,
                                                                   message);
     const quint32 requestDate = Telegram::Utils::getCurrentTime();
-    const QVector<PostBox *> boxes = recipient->postBoxes();
+    const QVector<PostBox *> boxes = getPostBoxes(targetPeer, fromUser);
 
     for (const PostBox *box : boxes) {
         UpdateNotification notification;
@@ -225,14 +258,23 @@ void XmppFederalizationApi::sendMessageFromXmpp(XmppUser *fromUser, MessageRecip
     }
 }
 
+void XmppFederalizationApi::inviteToMuc(const Peer &mucPeer, const QString &fromJid, const QString &toJid)
+{
+    const QString mucJid = getBareJid(mucPeer);
+    QXmppMessage message(fromJid, toJid);
+    message.setMucInvitationJid(mucJid);
+
+    xmppServer()->sendPacket(message);
+}
+
 AbstractUser *XmppFederalizationApi::getAbstractUser(quint32 userId) const
 {
-    return getUser(userId);
+    return getXmppUser(userId);
 }
 
 AbstractUser *XmppFederalizationApi::getAbstractUser(const QString &identifier) const
 {
-    return getUser(identifier);
+    return getXmppUser(identifier);
 }
 
 void XmppFederalizationApi::insertUser(XmppUser *user)
@@ -242,21 +284,65 @@ void XmppFederalizationApi::insertUser(XmppUser *user)
     m_jidToUserId.insert(user->jid(), user->userId());
 }
 
+QVector<PostBox *> XmppFederalizationApi::getPostBoxes(const Peer &targetPeer, AbstractUser *applicant) const
+{
+    // Boxes:
+    // message to contact
+    //    Users (self and recipient (if not self))
+    //
+    // message to group chat
+    //    Users (each member)
+    //
+    // message to megagroup or broadcast
+    //    Channel (the channel)
+
+    QVector<PostBox *> boxes;
+    if (targetPeer.type() == Peer::User) {
+        AbstractUser *toUser = getAbstractUser(targetPeer.id());
+        boxes.append(toUser->getPostBox());
+        if (applicant && applicant->id() != targetPeer.id()) {
+            boxes.append(applicant->getPostBox());
+        }
+    }
+    if (targetPeer.type() == Peer::Chat) {
+        const GroupChat *groupChat = getGroupChat(targetPeer.id());
+        for (const quint32 userId : groupChat->memberIds()) {
+            boxes.append(getAbstractUser(userId)->getPostBox());
+        }
+    }
+
+    return boxes;
+}
+
 void XmppFederalizationApi::queueServerUpdates(const QVector<UpdateNotification> &notifications)
 {
     for (const UpdateNotification &notification : notifications) {
-        XmppUser *user = getUser(notification.userId);
+        XmppUser *user = getXmppUser(notification.userId);
         if (!user) {
             qWarning(lcServerXmpp) << __func__ << "Invalid user" << notification.userId;
             continue;
         }
 
         switch (notification.type) {
+        case UpdateNotification::Type::CreateChat: {
+            processCreateChat(notification);
+            const MessageData *messageData = messageService()->getMessage(notification.messageDataId);
+            QString from = getUserBareJid(messageData->fromId());
+            for (const quint32 invitedId : messageData->action().users) {
+                XmppUser *invitedXmppUser = getXmppUser(invitedId);
+                if (!invitedXmppUser) {
+                    continue;
+                }
+                inviteToMuc(notification.dialogPeer, from, invitedXmppUser->jid());
+            }
+        }
+            break;
         case UpdateNotification::Type::NewMessage: {
             const MessageData *messageData = messageService()->getMessage(notification.messageDataId);
-            QString to = getBareJid(notification.userId);
-            QString from = getBareJid(messageData->fromId());
-            sendMessageFromTelegram(from, to, messageData->content().text());
+            const QString to = getUserBareJid(notification.userId);
+            const QString from = getUserBareJid(messageData->fromId());
+            const Peer peer = messageData->getDialogPeer(messageData->fromId());
+            sendMessageFromTelegram(from, peer, to, messageData);
         }
             break;
         default:

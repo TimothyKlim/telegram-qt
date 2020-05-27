@@ -7,6 +7,7 @@ class QXmppMessage;
 class QXmppDiscoveryIq;
 class QXmppMessage;
 class QXmppPingIq;
+class QXmppPresence;
 class QXmppServer;
 class QXmppIq;
 
@@ -31,9 +32,11 @@ public:
 
     bool handleStanza(const QDomElement &element) override;
     bool handleMessage(const QXmppMessage &stanza);
+    bool handleDiscoveryGet(const QXmppDiscoveryIq &stanza);
     bool handleDiscoveryResult(const QXmppDiscoveryIq &stanza);
     bool handlePingResult(const QXmppIq &stanza);
     bool handleRequestVCard(const QDomElement &element);
+    bool handleXmppUserJoinMuc(const QXmppPresence &stanza);
 
 //    QSet<QString> presenceSubscribers(const QString &jid) override;
 //    QSet<QString> presenceSubscriptions(const QString &jid) override;
