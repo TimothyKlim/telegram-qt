@@ -117,6 +117,8 @@ public slots:
     void setMessageAction(const Telegram::Peer peer, const Telegram::MessageAction &action);
     void readHistory(const Telegram::Peer peer, quint32 messageId);
 
+    void createChat2(const QString &title, const Telegram::Peer peer);
+
 Q_SIGNALS:
     void syncMessages(const Telegram::Peer &peer, const QVector<quint32> &messages); // Deprecated
     void syncMessagesReceived(const Telegram::Peer &peer, const QVector<quint32> &messages);
