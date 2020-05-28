@@ -538,6 +538,12 @@ void MessagingApi::readHistory(const Peer peer, quint32 messageId)
     return d->setMessageRead(peer, messageId);
 }
 
+void MessagingApi::createChat2(const QString &title, const Peer peer)
+{
+    QVector<quint32> users = { peer.id() };
+    createChat(title, users);
+}
+
 MessagesRpcLayer *MessagingApiPrivate::messagesLayer()
 {
     return m_backend->messagesLayer();
