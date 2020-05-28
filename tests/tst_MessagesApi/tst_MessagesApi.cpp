@@ -88,10 +88,13 @@ public:
 private slots:
     void initTestCase();
     void cleanupTestCase();
+public:
     void getSelfUserDialog();
     void getDialogs();
     void getAllDialogs();
+private slots:
     void groupChatMessaging();
+public:
     void sendMessage_data();
     void sendMessage();
     void getHistory_data();
