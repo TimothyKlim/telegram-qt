@@ -34,6 +34,7 @@ public:
     AbstractUser *getServerUser(quint32 userId) const;
     AbstractUser *getServerUser(const QString &userName) const;
     AbstractServerConnection *getServerForPeer(const Peer &peer) const;
+    AbstractServerApi *getServerApiForPeer(const Peer &peer) const;
 
     GroupChat *getGroupChat(quint32 chatId) const override;
 

@@ -86,6 +86,10 @@ AbstractUser *FederalizationApi::getServerUser(const QString &userName) const
 
 AbstractServerConnection *FederalizationApi::getServerForPeer(const Peer &peer) const
 {
+    if (peer.type() != Peer::User) {
+        return nullptr;
+    }
+
     for (AbstractServerConnection *remote : m_remoteServers) {
         AbstractUser *user = remote->getUser(peer.id());
         if (user) {
@@ -94,6 +98,16 @@ AbstractServerConnection *FederalizationApi::getServerForPeer(const Peer &peer) 
     }
 
     return nullptr;
+}
+
+AbstractServerApi *FederalizationApi::getServerApiForPeer(const Peer &peer) const
+{
+    AbstractServerConnection *remote = getServerForPeer(peer);
+    if (!remote) {
+        return nullptr;
+    }
+
+    return remote->api();
 }
 
 GroupChat *FederalizationApi::getGroupChat(quint32 chatId) const

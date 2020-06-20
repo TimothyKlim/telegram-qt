@@ -37,7 +37,7 @@ target_link_libraries(TelegramTestServer
     test_keys_data
 )
 
-if(TARGET Internal::XmppPlugin)
+if(TRUE) # TARGET Internal::XmppPlugin
     target_link_libraries(TelegramTestServer
         Internal::XmppPlugin
     )

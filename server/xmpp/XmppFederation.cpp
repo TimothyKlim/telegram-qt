@@ -170,6 +170,18 @@ XmppUser *XmppFederalizationApi::getXmppUser(quint32 userId) const
     return m_users.value(userId);
 }
 
+GroupChat *XmppFederalizationApi::getTelegramChat(const QString &jid) const
+{
+    const QString bareJid = QXmppUtils::jidToBareJid(jid);
+    quint32 chatId = m_jidToChatId.value(bareJid);
+    return getTelegramChat(chatId);
+}
+
+GroupChat *XmppFederalizationApi::getTelegramChat(quint32 chatId) const
+{
+    return getGroupChat(chatId);
+}
+
 AbstractUser *XmppFederalizationApi::getTelegramUser(const QString &jid) const
 {
     const QString userName = QXmppUtils::jidToUser(jid);
@@ -206,6 +218,15 @@ QString XmppFederalizationApi::getBareJid(const Peer &peer) const
 {
     if (peer.type() == Peer::User) {
         return getUserBareJid(peer.id());
+    } else if (peer.type() == Peer::Chat) {
+        if (!m_chatIdToJid.contains(peer.id())) {
+            if (getTelegramChat(peer.id())) {
+                QString chatPart = peer.toString();
+                QString domainPart = domain();
+                m_chatIdToJid.insert(peer.id(), QStringLiteral("%1@%2").arg(chatPart, domainPart));
+            }
+        }
+        return m_chatIdToJid.value(peer.id());
     }
 
     return QString();
@@ -245,6 +266,11 @@ void XmppFederalizationApi::sendMessageFromXmpp(XmppUser *fromUser, const Peer &
     const QVector<PostBox *> boxes = getPostBoxes(targetPeer, fromUser);
 
     for (const PostBox *box : boxes) {
+        if (box->peer() == fromUser->toPeer()) {
+            // Ignore the XMPP post box
+            continue;
+        }
+
         UpdateNotification notification;
         notification.type = UpdateNotification::Type::NewMessage;
         notification.date = requestDate;
@@ -252,19 +278,42 @@ void XmppFederalizationApi::sendMessageFromXmpp(XmppUser *fromUser, const Peer &
         notification.userId = box->peer().id();
         notification.dialogPeer = fromUser->toPeer();
 
-        AbstractServerConnection *remoteServerConnection = getServerForPeer(box->peer());
-        AbstractServerApi *remoteApi = remoteServerConnection->api();
+        AbstractServerApi *remoteApi = getServerApiForPeer(box->peer());
+        if (!remoteApi) {
+            continue;
+        }
         remoteApi->queueServerUpdates({notification});
     }
 }
 
 void XmppFederalizationApi::inviteToMuc(const Peer &mucPeer, const QString &fromJid, const QString &toJid)
 {
+    // XEP-0249: Direct MUC Invitations
     const QString mucJid = getBareJid(mucPeer);
     QXmppMessage message(fromJid, toJid);
     message.setMucInvitationJid(mucJid);
 
     xmppServer()->sendPacket(message);
+
+
+    // https://github.com/psi-im/psi/blob/85eef3b47d3cc2a9b7b942c1548da71c4c77a0a1/src/psiaccount.cpp#L2782
+
+    // what came:
+    // <message type="chat"
+    //     from="123456789@192.168.1.183"
+    //     to="test1@127.0.0.3">
+    // <x xmlns="jabber:x:conference"
+    //     jid="chat1@192.168.1.183"/>
+    // </message>
+
+
+    // RECEIVED <message to="test1@127.0.0.3" from="123456789@192.168.1.183" type="chat"><x xmlns="jabber:x:conference" jid="chat1@192.168.1.183"/></message>
+    // SENT <message to="test1@127.0.0.3" type="chat" from="123456789@192.168.1.183"><x xmlns="jabber:x:conference" jid="chat1@192.168.1.183"/></message>
+
+    // RECEIVED <message from="123456789@192.168.1.183" to="test1@127.0.0.3">
+    // <x xmlns="jabber:x:conference" jid="chat1@192.168.1.183"/>
+    // </message>
+    // WARNING Received a stanza from unexpected JID 123456789@192.168.1.183
 }
 
 AbstractUser *XmppFederalizationApi::getAbstractUser(quint32 userId) const
@@ -298,16 +347,19 @@ QVector<PostBox *> XmppFederalizationApi::getPostBoxes(const Peer &targetPeer, A
 
     QVector<PostBox *> boxes;
     if (targetPeer.type() == Peer::User) {
-        AbstractUser *toUser = getAbstractUser(targetPeer.id());
+        AbstractUser *toUser = getTelegramUser(targetPeer.id());
         boxes.append(toUser->getPostBox());
         if (applicant && applicant->id() != targetPeer.id()) {
             boxes.append(applicant->getPostBox());
         }
     }
     if (targetPeer.type() == Peer::Chat) {
-        const GroupChat *groupChat = getGroupChat(targetPeer.id());
+        const GroupChat *groupChat = getTelegramChat(targetPeer.id());
         for (const quint32 userId : groupChat->memberIds()) {
-            boxes.append(getAbstractUser(userId)->getPostBox());
+            AbstractUser *telegramParticipant = getTelegramUser(userId);
+            if (telegramParticipant) {
+                boxes.append(telegramParticipant->getPostBox());
+            }
         }
     }
 

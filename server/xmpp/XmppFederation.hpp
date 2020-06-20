@@ -38,6 +38,8 @@ public:
     XmppUser *getXmppUser(const QString &jid) const;
     XmppUser *getXmppUser(quint32 userId) const;
 
+    GroupChat *getTelegramChat(const QString &jid) const;
+    GroupChat *getTelegramChat(quint32 chatId) const;
     AbstractUser *getTelegramUser(const QString &jid) const;
     AbstractUser *getTelegramUser(quint32 userId) const;
     QString getUserBareJid(quint32 userId) const;
@@ -74,6 +76,9 @@ protected:
 
     // Maps for faster lookup
     QHash<QString, quint32> m_jidToUserId;
+    QHash<QString, quint32> m_jidToChatId;
+    QHash<quint32, QString> m_userIdToJid;
+    mutable QHash<quint32, QString> m_chatIdToJid;
 
     QHash<QString, PendingVariant *> m_requests;
 };

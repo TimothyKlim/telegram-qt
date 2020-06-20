@@ -203,20 +203,26 @@ bool TelegramExtension::handleRequestVCard(const QDomElement &element)
 
 bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
 {
+    GroupChat *muc = xmpp()->getTelegramChat(stanza.to());
+    if (!muc) {
+        return false;
+    }
+
+    QString invitedUserMucJid = stanza.to();
     QString fromJid = stanza.from();
+    QString mucJid = xmpp()->getBareJid(muc->toPeer());
+
     XmppUser *fromUser = xmpp()->ensureUser(stanza.from());
 
     // Get the room name from 'to'
     // Check if the room does not exist
     // Broadcast the presence
-    GroupChat *muc = nullptr;
 
     // TODO: status code, https://xmpp.org/extensions/xep-0045.html#enter-nonanon
     // Code 100 for "any occupant is allowed to see the user's full JID"
     // Code 170 for "room logging is enabled"
     // Maybe code 172 for "the room is non-anonymous"
 
-    QString mucJid;
     for (const ChatMember &member : muc->members()) {
         // Maybe it's OK to send presence to the joined user to inform about the role?
         if (member.userId == fromUser->userId()) {
@@ -224,7 +230,7 @@ bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
         }
 
         QXmppPresence memberPresence;
-        memberPresence.setFrom(mucJid + "/member1");
+        memberPresence.setFrom(invitedUserMucJid);
         memberPresence.setTo(fromJid);
         QXmppMucItem mucItem;
         mucItem.setJid(xmpp()->getUserBareJid(member.userId));
