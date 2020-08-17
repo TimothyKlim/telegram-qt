@@ -15,17 +15,30 @@ if(TARGET QXmpp::QXmpp)
         XmppUser.hpp
     )
 
-    add_library(XmppFederalizationPlugin STATIC
+    add_library(XmppFederalization STATIC
         ${xmpp_SOURCES}
     )
-    target_link_libraries(XmppFederalizationPlugin PUBLIC
+    target_link_libraries(XmppFederalization PUBLIC
         Qt5::Core
         Qt5::Network
         QXmpp::QXmpp
         TelegramQt${QT_VERSION_MAJOR}::Server
     )
 
-    target_include_directories(XmppFederalizationPlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(XmppFederalization PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    add_library(Internal::XmppPlugin ALIAS XmppFederalizationPlugin)
+    add_library(Internal::XmppPlugin ALIAS XmppFederalization)
+
+    add_library(XmppPlugin STATIC XmppPlugin.cpp)
+
+    target_link_libraries(XmppPlugin
+        Qt5::Core
+        TelegramQt${QT_VERSION_MAJOR}::Server
+    )
+
+    #install(
+    #    TARGETS XmppPlugin
+    #    DESTINATION ${INSTALL_QML_IMPORT_DIR}/TelegramQt
+    #    COMPONENT Runtime
+    #)
 endif()
