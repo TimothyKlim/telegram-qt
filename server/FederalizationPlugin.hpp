@@ -1,3 +1,6 @@
+#ifndef TELEGRAM_QT_SERVER_FEDERALIZATION_PLUGIN_HPP
+#define TELEGRAM_QT_SERVER_FEDERALIZATION_PLUGIN_HPP
+
 #include <QtPlugin>
 
 #define FederalizationInterface_iid "TelegramQt.Server.FederalizationInterface/1.0"
@@ -20,7 +23,7 @@ public:
 
 Q_DECLARE_INTERFACE(Telegram::Server::FederalizationInterface, FederalizationInterface_iid)
 
-class FederalizationPlugin : public QObject
+class Q_DECL_EXPORT FederalizationPlugin : public QObject
         , public Telegram::Server::FederalizationInterface
 {
     Q_OBJECT
@@ -31,3 +34,5 @@ public:
 
     Telegram::Server::FederalizationApi *create() override = 0;
 };
+
+#endif // TELEGRAM_QT_SERVER_FEDERALIZATION_PLUGIN_HPP

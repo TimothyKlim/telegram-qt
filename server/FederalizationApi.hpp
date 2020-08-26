@@ -4,6 +4,7 @@
 #include "ServerApi.hpp"
 #include "RemoteServerConnection.hpp"
 
+#include <QHostAddress>
 #include <QSet>
 
 namespace Telegram {
@@ -25,6 +26,10 @@ public:
     quint32 dcId() const final { return m_dcId; }
     void setDcId(quint32 id) { m_dcId = id; }
 
+    QString domain() const { return m_domain; }
+    virtual void setDomain(const QString &domain);
+    virtual void setListenAddress(const QHostAddress &address);
+
     MessageService *messageService() const override { return m_messageService; }
     void setMessageService(MessageService *messageService) { m_messageService = messageService; }
     IMediaService *mediaService() const override { return nullptr; }
@@ -43,6 +48,8 @@ protected:
 
 private:
     quint32 m_dcId = 0;
+    QString m_domain;
+    QHostAddress m_address;
     QSet<AbstractServerConnection*> m_remoteServers;
     MessageService *m_messageService = nullptr;
     QHash<quint32, LocalGroupChat *> m_groups; // groupId to GroupChat

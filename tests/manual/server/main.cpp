@@ -28,6 +28,7 @@
 #include "TelegramServerConfig.hpp"
 #include "TelegramServerUser.hpp"
 #include "Utils.hpp"
+#include "PluginsLoader.hpp"
 
 // Test
 #include "TestServerUtils.hpp"
@@ -43,9 +44,7 @@
 #include <QStandardPaths>
 #include <QTimer>
 
-#ifdef ENABLE_XMPP
-#include "xmpp/XmppFederation.hpp"
-#endif
+#include "FederalizationPlugin.hpp"
 
 using namespace Telegram::Server;
 
@@ -140,6 +139,8 @@ ExitCode internalMain(int argc, char *argv[])
         return ExitCode::RsaKeyError;
     }
 
+    Telegram::Server::PluginsLoader::setPluginsPaths({ QLatin1String("/home/user/prefix/telegram-qt/lib/qt5/plugins/TelegramQt/") });
+
     QCommandLineParser parser;
     parser.addHelpOption();
 
@@ -229,13 +230,9 @@ ExitCode internalMain(int argc, char *argv[])
         qWarning() << "Unable to save the RSA key in a persistent location.";
     }
 
-#ifdef ENABLE_XMPP
-    XmppFederalizationApi *xmppFed = new XmppFederalizationApi();
-    xmppFed->setDomain(address);
-    xmppFed->setListenAddress(QHostAddress(address));
-
-    cluster.addFederalization(xmppFed);
-#endif
+    for (FederalizationApi *api : PluginsLoader::federalizationApis()) {
+        cluster.addFederalization(api);
+    }
 
     if (!cluster.start()) {
         return ExitCode::UnableToStartServer;

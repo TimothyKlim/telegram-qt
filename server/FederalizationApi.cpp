@@ -55,6 +55,16 @@ FederalizationApi::FederalizationApi(QObject *parent)
 {
 }
 
+void FederalizationApi::setDomain(const QString &domain)
+{
+    m_domain = domain;
+}
+
+void FederalizationApi::setListenAddress(const QHostAddress &address)
+{
+    m_address = address;
+}
+
 void FederalizationApi::addServerConnection(AbstractServerConnection *remoteServer)
 {
     m_remoteServers.insert(remoteServer);
