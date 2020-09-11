@@ -68,6 +68,11 @@ QVector<FederalizationPlugin *> PluginsLoader::federalizationPlugins()
     return plugins;
 }
 
+QVector<AuthProviderPlugin *> PluginsLoader::authorizationPlugins()
+{
+    return { };
+}
+
 QVector<FederalizationApi *> PluginsLoader::federalizationApis()
 {
     QVector<FederalizationApi *> apis;

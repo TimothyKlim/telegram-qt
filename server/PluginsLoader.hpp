@@ -4,6 +4,7 @@
 #include <QStringList>
 #include <QVector>
 
+class AuthProviderPlugin;
 class FederalizationPlugin;
 
 namespace Telegram {
@@ -24,6 +25,7 @@ public:
     static void setPluginsPaths(const QStringList &paths);
 
     static QVector<FederalizationPlugin *> federalizationPlugins();
+    static QVector<AuthProviderPlugin *> authorizationPlugins();
 
     static QVector<FederalizationApi *> federalizationApis();
 };
