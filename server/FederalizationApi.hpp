@@ -44,7 +44,7 @@ public:
     GroupChat *getGroupChat(quint32 chatId) const override;
 
 protected:
-    void processCreateChat(const UpdateNotification &notification);
+    virtual void processCreateChat(const UpdateNotification &notification);
 
 private:
     quint32 m_dcId = 0;
