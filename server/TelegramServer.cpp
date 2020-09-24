@@ -544,9 +544,10 @@ bool Server::setUserOnline(LocalUser *user, bool online, Session *fromSession)
         return false;
     }
 
-    const auto notifications = createUpdates(UpdateNotification::Type::UpdateUserStatus,
+    const QVector<UpdateNotification> notifications = createUpdates(UpdateNotification::Type::UpdateUserStatus,
                                              user, fromSession);
-    queueUpdates(notifications);
+    routeUpdates(notifications);
+
     return true;
 }
 
@@ -1313,6 +1314,20 @@ void Server::processCreateChat(const UpdateNotification &notification)
     invitedMembers.removeOne(chat->creatorId());
     chat->inviteMembers(invitedMembers, chat->creatorId(), chat->date());
     m_groups.insert(chatId, chat);
+}
+
+void Server::routeUpdates(const QVector<UpdateNotification> &notifications)
+{
+    for (const UpdateNotification &notification : notifications) {
+        AbstractUser *user = getAbstractUser(notification.userId);
+        if (user->dcId() == dcId()) {
+            queueServerUpdates({notification});
+        } else {
+            AbstractServerConnection *remoteServerConnection = getRemoteServer(user->dcId());
+            AbstractServerApi *remoteApi = remoteServerConnection->api();
+            remoteApi->queueServerUpdates({notification});
+        }
+    }
 }
 
 void Server::insertUser(LocalUser *user)
