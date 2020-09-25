@@ -10,11 +10,9 @@
 #include <QXmppServer.h>
 #include <QXmppUtils.h>
 
-#include "QXmppConstants_p.h"
-
-#include "TelegramXmppServerExtension.hpp"
-#include "XmppUser.hpp"
 #include "XmppGroupChat.hpp"
+#include "XmppServerExtension.hpp"
+#include "XmppUser.hpp"
 
 #include "ApiUtils.hpp"
 
@@ -42,7 +40,7 @@ XmppFederalizationApi::XmppFederalizationApi(QObject *parent)
     logger->setLoggingType(QXmppLogger::StdoutLogging);
     m_xmppServer->setLogger(logger);
 
-    m_telegramExtension = new TelegramExtension(this);
+    m_telegramExtension = new XmppServerExtension(this);
     m_xmppServer->addExtension(m_telegramExtension);
 }
 
@@ -285,7 +283,21 @@ QString XmppFederalizationApi::getChatMemberJid(const Peer &groupChat, quint32 u
     return getChatMemberJid(chat, userId);
 }
 
-void XmppFederalizationApi::sendMessageFromTelegram(quint32 fromUserId, const Peer &targetPeer, quint32 userId, const MessageData *messageData)
+bool XmppFederalizationApi::sendPacket(const XmppUser *xmppUser, QXmppStanza *packet)
+{
+    bool result = true;
+
+    for (const QString &resource : xmppUser->activeResources()) {
+        packet->setTo(xmppUser->jid() + QLatin1Char('/') + resource);
+        if (!xmppServer()->sendPacket(*packet)) {
+            result = false;
+        }
+    }
+
+    return result;
+}
+
+void XmppFederalizationApi::sendMessageFromTelegram(quint32 fromUserId, const Peer &targetPeer, const MessageData *messageData)
 {
     if (!fromUserId) {
         return;
@@ -314,21 +326,12 @@ void XmppFederalizationApi::sendMessageFromTelegram(quint32 fromUserId, const Pe
         message.setFrom(xmppFrom);
 
         for (const quint32 memberId : groupChat->memberIds()) {
-            // TODO: Rework cross-server updates to send a group message once for a group
-            // instead of current "once per member" andg et rid of `quint32 userId` argument.
-            if (memberId != userId) {
-                continue;
-            }
-
             const XmppUser *xmppMember = getXmppUser(memberId);
             if (!xmppMember) {
                 continue;
             }
 
-            for (const QString &resource : xmppMember->activeResources()) {
-                message.setTo(xmppMember->jid() + QLatin1Char('/') + resource);
-                xmppServer()->sendPacket(message);
-            }
+            sendPacket(xmppMember, &message);
         }
     }
 }
@@ -342,7 +345,7 @@ void XmppFederalizationApi::sendMessageFromXmpp(XmppUser *fromUser, const Peer &
     const quint32 requestDate = Telegram::Utils::getCurrentTime();
 
 
-    // Bake Telegram message
+    // Bake a Telegram message
     UpdateNotification notification;
     notification.type = UpdateNotification::Type::NewMessage;
     notification.date = requestDate;
@@ -350,7 +353,6 @@ void XmppFederalizationApi::sendMessageFromXmpp(XmppUser *fromUser, const Peer &
 
     if (targetPeer.type() == Peer::User) {
         // Direct message
-
         notification.dialogPeer = fromUser->toPeer();
         notification.userId = targetPeer.id();
 
@@ -378,17 +380,14 @@ void XmppFederalizationApi::sendMessageFromXmpp(XmppUser *fromUser, const Peer &
         // Bake Telegram message
         notification.dialogPeer = targetPeer;
 
-        for (const quint32 userId : groupChat->memberIds()) {
-            const XmppUser *xmppMember = getXmppUser(userId);
+        for (const quint32 memberId : groupChat->memberIds()) {
+            const XmppUser *xmppMember = getXmppUser(memberId);
             if (xmppMember) {
-                for (const QString &resource : xmppMember->activeResources()) {
-                    message.setTo(xmppMember->jid() + QLatin1Char('/') + resource);
-                    xmppServer()->sendPacket(message);
-                }
+                sendPacket(xmppMember, &message);
             } else {
-                notification.userId = userId;
+                notification.userId = memberId;
 
-                AbstractServerApi *remoteApi = getServerApiForPeer(Peer::fromUserId(userId));
+                AbstractServerApi *remoteApi = getServerApiForPeer(Peer::fromUserId(memberId));
                 if (!remoteApi) {
                     continue;
                 }
@@ -406,6 +405,8 @@ void XmppFederalizationApi::inviteToMuc(const Peer &mucPeer, const QString &from
     QXmppMessage message(mucJid, toJid);
     message.setType(QXmppMessage::Type::Normal);
     message.setMucInvitationJid(mucJid);
+
+    qCDebug(lcServerXmpp) << "inviteToMuc" << mucJid << "user" << toJid;
 
     xmppServer()->sendPacket(message);
 
@@ -514,12 +515,6 @@ QVector<PostBox *> XmppFederalizationApi::getPostBoxes(const Peer &targetPeer, A
 void XmppFederalizationApi::queueServerUpdates(const QVector<UpdateNotification> &notifications)
 {
     for (const UpdateNotification &notification : notifications) {
-        XmppUser *user = getXmppUser(notification.userId);
-        if (!user) {
-            qWarning(lcServerXmpp) << __func__ << "Invalid user" << notification.userId;
-            continue;
-        }
-
         switch (notification.type) {
         case UpdateNotification::Type::CreateChat: {
             processCreateChat(notification);
@@ -537,7 +532,7 @@ void XmppFederalizationApi::queueServerUpdates(const QVector<UpdateNotification>
         case UpdateNotification::Type::NewMessage: {
             const MessageData *messageData = messageService()->getMessage(notification.messageDataId);
             const Peer peer = messageData->getDialogPeer(messageData->fromId());
-            sendMessageFromTelegram(messageData->fromId(), peer, notification.userId, messageData);
+            sendMessageFromTelegram(messageData->fromId(), peer, messageData);
         }
             break;
         default:

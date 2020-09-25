@@ -6,13 +6,14 @@
 #include <QHostAddress>
 
 class QXmppServer;
+class QXmppStanza;
 
 namespace Telegram {
 
 namespace Server {
 
 class AbstractUser;
-class TelegramExtension;
+class XmppServerExtension;
 class XmppUser;
 class XmppLocalChat;
 
@@ -54,7 +55,9 @@ public:
     QString getChatMemberJid(const Peer &groupChat, quint32 userId) const;
 
     QXmppServer *xmppServer() const { return m_xmppServer; }
-    void sendMessageFromTelegram(quint32 fromUserId, const Peer &targetPeer, quint32 userId, const MessageData *messageData);
+    bool sendPacket(const XmppUser *xmppUser, QXmppStanza *packet);
+
+    void sendMessageFromTelegram(quint32 fromUserId, const Peer &targetPeer, const MessageData *messageData);
     void sendMessageFromXmpp(XmppUser *fromUser, const Peer &targetPeer, const QString &message);
 
     void inviteToMuc(const Peer &mucPeer, const QString &fromJid, const QString &toJid);
@@ -81,7 +84,7 @@ protected:
     LocalGroupChat *createGroupChatObject(quint32 chatId, quint32 dcId) override;
 
     QXmppServer *m_xmppServer = nullptr;
-    TelegramExtension *m_telegramExtension = nullptr;
+    XmppServerExtension *m_telegramExtension = nullptr;
     QHostAddress m_listenAddress;
 
     // Data

@@ -711,24 +711,33 @@ QVector<UpdateNotification> Server::announceNewChat(const Peer &peer, Session *e
     notification.dialogPeer = peer;
 
     QVector<UpdateNotification> notificationsForCreator;
+    QVector<quint32> notifiedDCs;
     for (const ChatMember &member : groupChat->members()) {
         AbstractUser *user = getAbstractUser(member.userId);
         notification.userId = member.userId;
 
         if (user->dcId() == dcId()) {
+            // Local update
             QVector<UpdateNotification> notifications = processServerUpdates({notification});
             queueUpdates(notifications);
             if (member.role == ChatMember::Role::Creator) {
                 notificationsForCreator = notifications;
             }
-            continue;
-        }
-        AbstractServerConnection *remote = getRemoteServer(user->dcId());
-        if (!remote) {
-            continue;
-        }
+        } else {
+            if (notifiedDCs.contains(user->dcId())) {
+                continue;
+            }
 
-        remote->api()->queueServerUpdates({notification});
+            notifiedDCs.append(user->dcId());
+
+            // Remote update
+            AbstractServerConnection *remote = getRemoteServer(user->dcId());
+            if (!remote) {
+                continue;
+            }
+
+            remote->api()->queueServerUpdates({notification});
+        }
     }
 
     return notificationsForCreator;
@@ -746,6 +755,7 @@ QVector<UpdateNotification> Server::processMessage(MessageData *messageData, Ses
     AbstractUser *fromUser = getAbstractUser(messageData->fromId());
     QVector<PostBox *> boxes = getPostBoxes(targetPeer, fromUser);
     QVector<UpdateNotification> notifications;
+    QVector<quint32> notifiedDCs;
 
     // Result and broadcasted Updates date seems to be always older than the message date,
     // so prepare the request date right on the start.
@@ -807,6 +817,12 @@ QVector<UpdateNotification> Server::processMessage(MessageData *messageData, Ses
                                                         << userId;
                     continue;
                 }
+                if (notifiedDCs.contains(remoteUser->dcId())) {
+                    continue;
+                }
+                notifiedDCs.append(remoteUser->dcId());
+                notification.userId = 0;
+
                 AbstractServerConnection *remoteServerConnection = getRemoteServer(remoteUser->dcId());
                 AbstractServerApi *remoteApi = remoteServerConnection->api();
                 // if (!remoteApi->messageService()->hasMessage()) {
@@ -839,6 +855,7 @@ QVector<UpdateNotification> Server::processMessageEdit(MessageData *messageData)
     //    Channel (the channel)
 
     QVector<UpdateNotification> notifications;
+    QVector<quint32> notifiedDCs;
 
     // Result and broadcasted Updates date seems to be always older than the message date,
     // so prepare the request date right on the start.
@@ -872,6 +889,12 @@ QVector<UpdateNotification> Server::processMessageEdit(MessageData *messageData)
                                                         << userId;
                     continue;
                 }
+                if (notifiedDCs.contains(remoteUser->dcId())) {
+                    continue;
+                }
+                notifiedDCs.append(remoteUser->dcId());
+                notification.userId = 0;
+
                 AbstractServerConnection *remoteServerConnection = getRemoteServer(remoteUser->dcId());
                 AbstractServerApi *remoteApi = remoteServerConnection->api();
                 // if (!remoteApi->messageService()->hasMessage()) {

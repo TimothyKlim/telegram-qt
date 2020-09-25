@@ -7,13 +7,13 @@ endif()
 
 if(TARGET QXmpp::QXmpp)
     set(xmpp_SOURCES
-        TelegramXmppServerExtension.cpp
-        TelegramXmppServerExtension.hpp
         XmppFederation.cpp
         XmppFederation.hpp
         XmppGroupChat.cpp
         XmppGroupChat.hpp
         XmppPlugin.cpp
+        XmppServerExtension.cpp
+        XmppServerExtension.hpp
         XmppUser.cpp
         XmppUser.hpp
     )

@@ -1,4 +1,4 @@
-#include "TelegramXmppServerExtension.hpp"
+#include "XmppServerExtension.hpp"
 
 #include <QTextStream>
 #include <QDomElement>
@@ -36,22 +36,22 @@ namespace Telegram {
 
 namespace Server {
 
-TelegramExtension::TelegramExtension(XmppFederalizationApi *parent)
+XmppServerExtension::XmppServerExtension(XmppFederalizationApi *parent)
     : m_xmpp(parent)
 {
 }
 
-QString TelegramExtension::extensionName() const
+QString XmppServerExtension::extensionName() const
 {
     return QStringLiteral("Telegram");
 }
 
-int TelegramExtension::extensionPriority() const
+int XmppServerExtension::extensionPriority() const
 {
     return 10;
 }
 
-QString TelegramExtension::discoverUser(const QString &jid)
+QString XmppServerExtension::discoverUser(const QString &jid)
 {
     // <iq type='get'
     //     from='shakespeare.lit'
@@ -70,7 +70,7 @@ QString TelegramExtension::discoverUser(const QString &jid)
     return iq.id();
 }
 
-QString TelegramExtension::pingUser(const QString &jid)
+QString XmppServerExtension::pingUser(const QString &jid)
 {
     QXmppPingIq iq;
     iq.setTo(jid);
@@ -82,7 +82,7 @@ QString TelegramExtension::pingUser(const QString &jid)
     return iq.id();
 }
 
-bool TelegramExtension::handleStanza(const QDomElement &element)
+bool XmppServerExtension::handleStanza(const QDomElement &element)
 {
     QString str;
     QTextStream stream(&str);
@@ -149,7 +149,7 @@ bool TelegramExtension::handleStanza(const QDomElement &element)
     return false;
 }
 
-bool TelegramExtension::handleRequestVCard(const QDomElement &element)
+bool XmppServerExtension::handleRequestVCard(const QDomElement &element)
 {
     // <iq xmlns="jabber:server" from="test5@127.0.0.3/user-PC" id="aac0a" to="123456789@127.0.0.1" type="get">
     //     <vCard xmlns="vcard-temp"/>
@@ -206,10 +206,11 @@ bool TelegramExtension::handleRequestVCard(const QDomElement &element)
     return true;
 }
 
-bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
+bool XmppServerExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
 {
     XmppLocalChat *muc = xmpp()->getXmppChat(stanza.to());
     if (!muc) {
+        // TODO: stanza with "cancel" / "item-not-found"
         return false;
     }
 
@@ -223,7 +224,7 @@ bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
         return false;
     }
 
-    XmppUser *fromUser = xmpp()->ensureUser(stanza.from());
+    const XmppUser *fromUser = xmpp()->ensureUser(stanza.from());
     if (!fromUser) {
         // TODO: Handle the error (invalid from)
         return false;
@@ -273,17 +274,13 @@ bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
         }
 
         presence.setMucItem(mucItem);
-
-        for (const QString &resource : xmppMember->activeResources()) {
-            presence.setTo(xmppMember->jid() + QLatin1Char('/') + resource);
-            server()->sendPacket(presence);
-        }
+        xmpp()->sendPacket(xmppMember, &presence);
     }
 
     return true;
 }
 
-void TelegramExtension::setMucItemFromMember(QXmppMucItem *mucItem, const ChatMember &member) const
+void XmppServerExtension::setMucItemFromMember(QXmppMucItem *mucItem, const ChatMember &member) const
 {
     mucItem->setJid(xmpp()->getUserBareJid(member.userId));
     switch (member.role) {
@@ -304,7 +301,7 @@ void TelegramExtension::setMucItemFromMember(QXmppMucItem *mucItem, const ChatMe
     }
 }
 
-bool TelegramExtension::handleMessage(const QXmppMessage &stanza)
+bool XmppServerExtension::handleMessage(const QXmppMessage &stanza)
 {
     if (stanza.type() == QXmppMessage::Error) {
         qWarning() << "Received an error with message id" << stanza.id();
@@ -330,7 +327,7 @@ bool TelegramExtension::handleMessage(const QXmppMessage &stanza)
     return true;
 }
 
-bool TelegramExtension::handleDiscoveryGet(const QXmppDiscoveryIq &stanza)
+bool XmppServerExtension::handleDiscoveryGet(const QXmppDiscoveryIq &stanza)
 {
     if (stanza.queryType() == QXmppDiscoveryIq::InfoQuery) {
         // if (stanza.queryNode() == QLatin1String("x-roomuser-item")) {
@@ -377,7 +374,7 @@ bool TelegramExtension::handleDiscoveryGet(const QXmppDiscoveryIq &stanza)
     return false;
 }
 
-bool TelegramExtension::handleDiscoveryResult(const QXmppDiscoveryIq &stanza)
+bool XmppServerExtension::handleDiscoveryResult(const QXmppDiscoveryIq &stanza)
 {
     // <iq type='result'
     //     from='juliet@capulet.com'
@@ -423,7 +420,7 @@ bool TelegramExtension::handleDiscoveryResult(const QXmppDiscoveryIq &stanza)
     return true;
 }
 
-bool TelegramExtension::handlePingResult(const QXmppIq &stanza)
+bool XmppServerExtension::handlePingResult(const QXmppIq &stanza)
 {
     const QString requestId = stanza.id();
     PendingVariant *operation = xmpp()->takeRequest(requestId);

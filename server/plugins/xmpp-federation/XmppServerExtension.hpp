@@ -19,10 +19,10 @@ namespace Server {
 class XmppFederalizationApi;
 class ChatMember;
 
-class TelegramExtension : public QXmppServerExtension
+class XmppServerExtension : public QXmppServerExtension
 {
 public:
-    TelegramExtension(XmppFederalizationApi *parent);
+    XmppServerExtension(XmppFederalizationApi *parent);
 
     QString extensionName() const override;
     int extensionPriority() const override;
