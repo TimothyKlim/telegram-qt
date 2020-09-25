@@ -45,6 +45,7 @@ public:
 
 protected:
     virtual void processCreateChat(const UpdateNotification &notification);
+    virtual LocalGroupChat *createGroupChatObject(quint32 chatId, quint32 dcId);
 
 private:
     quint32 m_dcId = 0;

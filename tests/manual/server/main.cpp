@@ -213,7 +213,7 @@ ExitCode internalMain(int argc, char *argv[])
     LocalCluster cluster;
     cluster.setServerPrivateRsaKey(privateKey);
     cluster.setServerConfiguration(dcConfig);
-    cluster.setListenAddress(QHostAddress::Any);
+    cluster.setListenAddress(QHostAddress(QLatin1String("127.0.0.4")));
 
     ConstantAuthCodeProvider authProvider;
     cluster.setAuthorizationProvider(&authProvider);

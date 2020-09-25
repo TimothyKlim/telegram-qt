@@ -11,6 +11,8 @@ if(TARGET QXmpp::QXmpp)
         TelegramXmppServerExtension.hpp
         XmppFederation.cpp
         XmppFederation.hpp
+        XmppGroupChat.cpp
+        XmppGroupChat.hpp
         XmppPlugin.cpp
         XmppUser.cpp
         XmppUser.hpp

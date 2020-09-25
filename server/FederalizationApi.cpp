@@ -128,7 +128,7 @@ GroupChat *FederalizationApi::getGroupChat(quint32 chatId) const
 void FederalizationApi::processCreateChat(const UpdateNotification &notification)
 {
     quint32 chatId = notification.dialogPeer.id();
-    LocalGroupChat *chat = new LocalGroupChat(chatId, notification.dcId);
+    LocalGroupChat *chat = createGroupChatObject(chatId, notification.dcId);
     chat->setDate(notification.date);
 
     const MessageData *messageData = messageService()->getMessage(notification.messageDataId);
@@ -136,6 +136,11 @@ void FederalizationApi::processCreateChat(const UpdateNotification &notification
     chat->setCreator(messageData->fromId());
     chat->inviteMembers(messageData->action().users, chat->creatorId(), chat->date());
     m_groups.insert(chatId, chat);
+}
+
+LocalGroupChat *FederalizationApi::createGroupChatObject(quint32 chatId, quint32 dcId)
+{
+    return new LocalGroupChat(chatId, dcId);
 }
 
 } // Server namespace

@@ -14,6 +14,7 @@ namespace Server {
 class AbstractUser;
 class TelegramExtension;
 class XmppUser;
+class XmppLocalChat;
 
 class XmppFederalizationApi : public FederalizationApi
 {
@@ -38,6 +39,9 @@ public:
     XmppUser *getXmppUser(const QString &jid) const;
     XmppUser *getXmppUser(quint32 userId) const;
 
+    XmppLocalChat *getXmppChat(const QString &jid) const;
+    XmppLocalChat *getXmppChat(quint32 chatId) const;
+
     GroupChat *getTelegramChat(const QString &jid) const;
     GroupChat *getTelegramChat(quint32 chatId) const;
     AbstractUser *getTelegramUser(const QString &jid) const;
@@ -46,11 +50,17 @@ public:
     QString getBareJid(const Peer &peer) const;
     Peer getPeerFromJid(const QString &jid) const;
 
+    QString getChatMemberJid(const XmppLocalChat *groupChat, quint32 userId) const;
+    QString getChatMemberJid(const Peer &groupChat, quint32 userId) const;
+
     QXmppServer *xmppServer() const { return m_xmppServer; }
-    void sendMessageFromTelegram(const QString &from, const Peer &targetPeer, const QString &routeToJid, const MessageData *messageData);
+    void sendMessageFromTelegram(quint32 fromUserId, const Peer &targetPeer, quint32 userId, const MessageData *messageData);
     void sendMessageFromXmpp(XmppUser *fromUser, const Peer &targetPeer, const QString &message);
 
     void inviteToMuc(const Peer &mucPeer, const QString &fromJid, const QString &toJid);
+    void handleNewXmppChatMember(GroupChat *groupChat,
+                                 const QString &joinedUserOwnJid,
+                                 const QString &nickname);
 
     AbstractUser *getAbstractUser(quint32 userId) const override;
     AbstractUser *getAbstractUser(const QString &identifier) const override;
@@ -68,18 +78,19 @@ public:
 
 protected:
     void processCreateChat(const UpdateNotification &notification) override;
+    LocalGroupChat *createGroupChatObject(quint32 chatId, quint32 dcId) override;
 
     QXmppServer *m_xmppServer = nullptr;
     TelegramExtension *m_telegramExtension = nullptr;
     QHostAddress m_listenAddress;
 
     // Data
-    QHash<quint32, XmppUser*> m_users; // userId to User
+    QHash<quint32, XmppUser*> m_xmppUsers; // userId to User
+    QHash<quint32, XmppLocalChat *> m_xmppGroups; // groupId to XmppLocalChat
 
     // Maps for faster lookup
     QHash<QString, quint32> m_jidToUserId;
     QHash<QString, quint32> m_jidToChatId;
-    QHash<quint32, QString> m_userIdToJid;
     mutable QHash<quint32, QString> m_chatIdToJid;
 
     QHash<QString, PendingVariant *> m_requests;

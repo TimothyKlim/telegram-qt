@@ -43,8 +43,6 @@ public:
 //    QSet<QString> presenceSubscribers(const QString &jid) override;
 //    QSet<QString> presenceSubscriptions(const QString &jid) override;
 
-    void processIncomingMessage(const QXmppMessage &message);
-
     XmppFederalizationApi *xmpp() const { return m_xmpp; }
 
     void setMucItemFromMember(QXmppMucItem *mucItem, const ChatMember &member) const;

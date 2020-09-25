@@ -3,6 +3,8 @@
 
 #include "TelegramServerUser.hpp"
 
+#include <QSet>
+
 namespace Telegram {
 
 namespace Server {
@@ -31,7 +33,8 @@ public:
     ImageDescriptor getCurrentImage() const override { return {}; }
     QVector<quint32> contactList() const override { return { }; }
 
-    void setChatNickname(qint32 chatId, const QString &nickname);
+    void addResource(const QString &resource);
+    QSet<QString> activeResources() const { return m_resources; }
 
 protected:
     QString m_jid;
@@ -39,7 +42,7 @@ protected:
     quint32 m_dcId = 0;
 
     UserPostBox m_box;
-    QHash<qint32, QString> m_nicknameInChat;
+    QSet<QString> m_resources;
 };
 
 } // Server

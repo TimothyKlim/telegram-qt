@@ -15,6 +15,7 @@
 #include "PendingVariant.hpp"
 
 #include "XmppFederation.hpp"
+#include "XmppGroupChat.hpp"
 #include "XmppUser.hpp"
 
 #include <QXmlStreamWriter>
@@ -207,7 +208,7 @@ bool TelegramExtension::handleRequestVCard(const QDomElement &element)
 
 bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
 {
-    GroupChat *muc = xmpp()->getTelegramChat(stanza.to());
+    XmppLocalChat *muc = xmpp()->getXmppChat(stanza.to());
     if (!muc) {
         return false;
     }
@@ -222,30 +223,23 @@ bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
         return false;
     }
 
-    QString mucJid = xmpp()->getBareJid(muc->toPeer());
-
     XmppUser *fromUser = xmpp()->ensureUser(stanza.from());
-    fromUser->setChatNickname(muc->id(), nickname);
+    if (!fromUser) {
+        // TODO: Handle the error (invalid from)
+        return false;
+    }
 
-    // Get the room name from 'to'
-    // Check if the room does not exist
-    // Broadcast the presence
+    xmpp()->handleNewXmppChatMember(muc, joinedUserOwnJid, nickname);
 
-    const ChatMember *joinedMember = nullptr;
+    // Send Presence from Existing Occupants to New Occupan
+    // https://xmpp.org/extensions/xep-0045.html#example-20
     for (const ChatMember &member : muc->members()) {
         if (member.userId == fromUser->userId()) {
-            joinedMember = &member;
             continue;
         }
 
-        QString memberNickname = QStringLiteral("user%1").arg(member.userId);
-        AbstractUser *memberUser = xmpp()->getTelegramUser(member.userId);
-        if (memberUser && !memberUser->userName().isEmpty()) {
-            memberNickname = memberUser->userName();
-        }
-
         QXmppPresence memberPresence;
-        memberPresence.setFrom(mucJid + QLatin1Char('/') + memberNickname);
+        memberPresence.setFrom(xmpp()->getChatMemberJid(muc, member.userId));
         memberPresence.setTo(joinedUserOwnJid);
 
         QXmppMucItem mucItem;
@@ -255,23 +249,35 @@ bool TelegramExtension::handleXmppUserJoinMuc(const QXmppPresence &stanza)
         server()->sendPacket(memberPresence);
     }
 
-    {
-        // TODO: status code, https://xmpp.org/extensions/xep-0045.html#enter-nonanon
-        const int code100 = 100;
-        // Code 100 for "any occupant is allowed to see the user's full JID"
-        // Code 170 for "room logging is enabled"
-        // Maybe code 172 for "the room is non-anonymous"
+    // Send New Occupant's Presence to All Occupants
+    // https://xmpp.org/extensions/xep-0045.html#example-21
+    for (const ChatMember &member : muc->members()) {
+        const XmppUser *xmppMember = xmpp()->getXmppUser(member.userId);
+        if (!xmppMember) {
+            continue;
+        }
 
-        QXmppPresence memberPresence;
-        memberPresence.setFrom(joinedUserMucJid);
-        memberPresence.setTo(joinedUserOwnJid);
+        QXmppPresence presence;
+        presence.setFrom(joinedUserMucJid);
 
         QXmppMucItem mucItem;
-        setMucItemFromMember(&mucItem, *joinedMember);
+        setMucItemFromMember(&mucItem, member);
 
-        memberPresence.setMucStatusCodes({code100});
-        memberPresence.setMucItem(mucItem);
-        server()->sendPacket(memberPresence);
+        if (member.userId == fromUser->userId()) {
+            // TODO: status code, https://xmpp.org/extensions/xep-0045.html#enter-nonanon
+            const int code100 = 100;
+            // Code 100 for "any occupant is allowed to see the user's full JID"
+            // Code 170 for "room logging is enabled"
+            // Maybe code 172 for "the room is non-anonymous"
+            presence.setMucStatusCodes({code100});
+        }
+
+        presence.setMucItem(mucItem);
+
+        for (const QString &resource : xmppMember->activeResources()) {
+            presence.setTo(xmppMember->jid() + QLatin1Char('/') + resource);
+            server()->sendPacket(presence);
+        }
     }
 
     return true;
@@ -300,6 +306,11 @@ void TelegramExtension::setMucItemFromMember(QXmppMucItem *mucItem, const ChatMe
 
 bool TelegramExtension::handleMessage(const QXmppMessage &stanza)
 {
+    if (stanza.type() == QXmppMessage::Error) {
+        qWarning() << "Received an error with message id" << stanza.id();
+        return true;
+    }
+
     //  <message xmlns="jabber:server" to="telegram@127.0.0.2" id="aabfa" from="qxmpp.test1@127.0.0.3/localhost">
     //     <subject xmlns="jabber:server"/>
     //     <body xmlns="jabber:server">asdfasdf</body>

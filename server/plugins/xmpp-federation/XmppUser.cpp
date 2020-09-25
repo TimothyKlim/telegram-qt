@@ -18,9 +18,12 @@ void XmppUser::setJid(const QString &jid)
     }
 }
 
-void XmppUser::setChatNickname(qint32 chatId, const QString &nickname)
+void XmppUser::addResource(const QString &resource)
 {
-    m_nicknameInChat.insert(chatId, nickname);
+    if (resource.isEmpty()) {
+        return;
+    }
+    m_resources.insert(resource);
 }
 
 } // Server

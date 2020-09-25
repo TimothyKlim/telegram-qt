@@ -127,7 +127,8 @@ bool LocalCluster::start()
     if (!hasFails) {
         for (FederalizationApi *fed : m_federalizations) {
             fed->setDcId(++maxDcId);
-            // fed->setDomain();
+            // fed->setDomain(m_listenAddress.toString());
+            fed->setDomain(QLatin1String("thost"));
             fed->setListenAddress(m_listenAddress);
 
             FederalizationGateway *federalizationGateWay = new FederalizationGateway(this);
